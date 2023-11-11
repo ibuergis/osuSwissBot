@@ -3,7 +3,7 @@ from discord import Embed
 from dataManager import DataManager
 from database import DB
 from entities import Player
-from images import ThumbnailGenerator
+from prepareReplay import createAll
 import re as regex
 from botFeatures.buttons import Thumbnail
 
@@ -18,11 +18,7 @@ class OsuHandler:
 
     __osu: OssapiAsync
 
-    __thumbnailGenerator: ThumbnailGenerator = ThumbnailGenerator()
-
     def __init__(self, db, config, test=False):
-
-
         self.__db = db
         self.__osu = OssapiAsync(int(config['clientId']),
                                  config['clientSecret'], 'http://localhost:3914/', ['public', 'identify'], grant="authorization")
@@ -141,20 +137,10 @@ class OsuHandler:
         self.__db.commit()
 
     async def prepareReplay(self, scoreId: int, description: str = '', shortenTitle: bool = False) -> bool:
-        thumbnailGenerator = ThumbnailGenerator()
         score: ossapi.Score = await self.__osu.score(ossapi.GameMode.OSU, scoreId)
         player = await self.__osu.user(score.user_id, mode=score.mode)
         beatmap = await self.__osu.beatmap(score.beatmap.id)
-        await thumbnailGenerator.createThumbnail(self.__osu, player, score, beatmap, description, shortenTitle)
-        try:
-            replay = await self.__osu.download_score(ossapi.GameMode.OSU, score.best_id, raw=True)
-            with open(f'images/output/{scoreId}.osr', 'wb+') as f:
-                f.write(replay)
-                f.close()
-            replay = True
-        except ValueError:
-            replay = False
-
+        replay = await createAll(self.__osu, player, score, beatmap, description, shortenTitle)
         return replay
 
     async def convertReplayFile(self, file: str):
