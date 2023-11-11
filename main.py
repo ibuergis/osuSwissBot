@@ -3,11 +3,7 @@ import os
 
 import discord
 from discord.ext import commands
-from discord.ext.commands.view import StringView
 
-from images import ThumbnailGenerator
-
-from dataManager import DataManager
 from osu import OsuHandler
 from botFeatures.commands import Automation
 from database import DB
@@ -40,20 +36,20 @@ if __name__ == '__main__':
         files = []
         if await osuHandler.prepareReplay(scoreid, description, shortentitle):
             error = ''
-            files.append(discord.File(f'images/output/{scoreid}.osr'))
+            files.append(discord.File(f'prepareReplay/output/{scoreid}.osr'))
         else:
             error = f"**Score has no replay on the website**\n\n"
 
-        files.append(discord.File(f'images/output/{scoreid}.jpg'))
-        description = open(f'images/output/{scoreid}Description', 'r').read()
-        title = open(f'images/output/{scoreid}Title', 'r').read().replace('#star#', '⭐')
+        files.append(discord.File(f'prepareReplay/output/{scoreid}.jpg'))
+        description = open(f'prepareReplay/output/{scoreid}Description', 'r').read()
+        title = open(f'prepareReplay/output/{scoreid}Title', 'r').read().replace('#star#', '⭐')
 
         await channel.send(f'{error}title:\n```{title}```\ndescription:\n```{description}```', files=files)
 
-        os.remove(f'images/output/{scoreid}Description')
-        os.remove(f'images/output/{scoreid}Title')
-        os.remove(f'images/output/{scoreid}.jpg')
-        os.remove(f'images/output/{scoreid}.osr')
+        os.remove(f'prepareReplay/output/{scoreid}Description')
+        os.remove(f'prepareReplay/output/{scoreid}Title')
+        os.remove(f'prepareReplay/output/{scoreid}.jpg')
+        os.remove(f'prepareReplay/output/{scoreid}.osr')
 
 
     @bot.slash_command()
