@@ -1,0 +1,1 @@
+from .thumbnailGenerator import ThumbnailGenerator
