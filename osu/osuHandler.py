@@ -21,20 +21,22 @@ class OsuHandler:
     def __init__(self, db, config, test=False):
         self.__db = db
         self.__osu = OssapiAsync(int(config['clientId']),
-                                 config['clientSecret'], 'http://localhost:3914/', ['public', 'identify'], grant="authorization")
+                                 config['clientSecret'], 'http://localhost:3914/', ['public', 'identify'],
+                                 grant="authorization")
 
     async def getUsersFromAPI(self, pages):
         players = []
         for page in range(pages):
             page += 1
-            players.extend(await self.__osu.ranking(GameMode.OSU, RankingType.PERFORMANCE, country='ch', cursor={'page': page}).rankings)
+            players.extend(await self.__osu.ranking(GameMode.OSU, RankingType.PERFORMANCE, country='ch',
+                                                    cursor={'page': page}).rankings)
         return players
 
     async def getUsersFromWebsite(self, pages, gamemode='osu'):
         players = []
         for page in range(pages):
             page += 1
-            page = urlopen(f'https://osu.ppy.sh/rankings/osu/performance?country=CH&page={page}')
+            page = urlopen(f'https://osu.ppy.sh/rankings/{gamemode}/performance?country=CH&page={page}')
             html_bytes = page.read()
             html: str = ''.join(html_bytes.decode("utf-8").split('\n'))
             ''.join(html.split('\n'))
@@ -58,68 +60,58 @@ class OsuHandler:
 
         return players
 
-    async def getRecentPlays(self, bot, mode: str = 'osu'):
-        players = self.__db.getObjects('player')
+    async def createScoreEmbed(self, player: Player, score: ossapi.Score, beatmap: ossapi.Beatmap):
+        mods = score.mods.short_name()
+        if mods == '':
+            mods = 'NM'
+        embed = Embed(colour=16007990)
+        beatmapset = beatmap.beatmapset()
+        embed.set_author(name=f'Score done by {player.username}', url=f'https://osu.ppy.sh/scores/osu/{score.best_id}')
+        embed.title = f'{beatmapset.artist} - {beatmapset.title} [{beatmap.version}]'
+        embed.url = f'https://osu.ppy.sh/beatmapsets/{beatmap.beatmapset_id}#osu/{beatmap.id}'
+        embed.set_image(
+            url=f'https://assets.ppy.sh/beatmaps/{beatmap.beatmapset_id}/covers/cover.jpg?1650602952')
+
+        embed.set_thumbnail(url=f'https://a.ppy.sh/{player.userId}?1692642160')
+        embed.add_field(name='Score:', value=f"{score.score:,}")
+        embed.add_field(name='Accuracy:', value=f"{str(int(score.accuracy * 10000) / 100)}%")
+        embed.add_field(name='Hits:',
+                        value=f"{score.statistics.count_300 or 0}/{score.statistics.count_100 or 0}/{score.statistics.count_50 or 0}/{score.statistics.count_miss or 0}")
+        embed.add_field(name='Combo:', value=f"{score.max_combo}x")
+        embed.add_field(name='Mods:', value=mods)
+        embed.add_field(name='PP:', value=score.pp)
+        return embed
+
+    async def processRecentPlayerScores(self, bot, user, mode):
+        scores = await self.__osu.user_scores(user.userId, ScoreType.RECENT, include_fails=False, limit=20, mode=mode)
         jsonScores = DataManager.getJson('lastScores')
-        for player in players:
-            scores = await self.__osu.user_scores(player.userId, ScoreType.RECENT, include_fails=False, limit=20, mode=mode)
-            tempScores = []
-            for score in scores:
-                score: ossapi.Score
-                tempScores.append(score.id)
+        tempScores = []
+        for score in scores:
+            score: ossapi.Score
+            tempScores.append(score.id)
+            if str(user.userId) not in jsonScores.keys():
+                jsonScores[str(user.userId)] = []
 
-                if str(player.userId) not in jsonScores.keys():
-                    jsonScores[str(player.userId)] = []
+            if score.replay is True and score.id is not None and score.id not in jsonScores[str(user.userId)]:
+                beatmap = await self.__osu.beatmap(score.beatmap.id)
+                topPlays = await self.__osu.user_scores(user.userId, ScoreType.BEST, include_fails=False, limit=20, mode=mode)
 
-                if score.replay is True and score.id is not None and score.id not in jsonScores[str(player.userId)]:
-                    beatmap = await self.__osu.beatmap(score.beatmap.id)
-                    topPlays = await self.__osu.user_scores(player.userId, ScoreType.BEST, include_fails=False, limit=20, mode=mode)
-                    beatmapset = score.beatmapset
-                    mods = score.mods.short_name()
-                    if mods == '':
-                        mods = 'NM'
-                    scoreData = {
-                        'id': score.id,
-                        'link': f'https://osu.ppy.sh/scores/osu/{score.best_id}',
-                        'statistics': {
-                            'rank': score.rank.name,
-                            'score': score.score,
-                            'pp': score.pp,
-                            'mod': mods,
-                            'combo': score.max_combo,
-                            'acc': str(int(score.accuracy * 10000) / 100),
-                            '300': score.statistics.count_300 or 0,
-                            '100': score.statistics.count_100 or 0,
-                            '50': score.statistics.count_50 or 0,
-                            'miss': score.statistics.count_miss or 0,
-                        },
-                    }
-                    embed = Embed(colour=16007990)
-                    embed.set_author(name=f'Score done by {player.username}', url=scoreData['link'])
-                    embed.title = f'{beatmapset.artist} - {beatmapset.title} [{beatmap.version}]'
-                    embed.url = f'https://osu.ppy.sh/beatmapsets/{beatmap.beatmapset_id}#osu/{beatmap.id}'
-                    embed.set_image(url=f'https://assets.ppy.sh/beatmaps/{beatmap.beatmapset_id}/covers/cover.jpg?1650602952')
+                message = ''
+                if score.pp is not None:
+                    if score.pp == topPlays[0].pp:
+                        message = '@everyone this is a new top play'
+                    elif score.pp == topPlays[0].pp and int(score.pp // 100) == int(topPlays[1].pp):
+                        message = f'@everyone this person broke the {int(score.pp / 100) * 100}pp barrier'
+                    await bot.mainChannel.send(message, embed=await self.createScoreEmbed(user, score, beatmap),
+                                               view=Thumbnail(self.__osu, bot, user.userId, score, beatmap))
 
-                    embed.set_thumbnail(url=f'https://a.ppy.sh/{player.userId}?1692642160')
-                    embed.add_field(name='Score:', value=f"{scoreData['statistics']['score']:,}")
-                    embed.add_field(name='Accuracy:', value=f"{scoreData['statistics']['acc']}%")
-                    embed.add_field(name='Hits:',
-                                    value=f"{scoreData['statistics']['300']}/{scoreData['statistics']['100']}/{scoreData['statistics']['50']}/{scoreData['statistics']['miss']}")
-                    embed.add_field(name='Combo:', value=f"{scoreData['statistics']['combo']}x")
-                    embed.add_field(name='Mods:', value=mods)
-                    embed.add_field(name='PP:', value=scoreData['statistics']['pp'])
-                    message = ''
-                    if score.pp is not None:
-                        if score.pp == topPlays[0].pp:
-                            message = '@everyone this is a new top play'
-                        elif score.pp == topPlays[0].pp and int(score.pp//100) == int(topPlays[1].pp):
-                            message = f'@everyone this person broke the {int(score.pp/100)*100}pp barrier'
-                        await bot.mainChannel.send(message, embed=embed,
-                                                   view=Thumbnail(self.__osu, bot, player.userId, score, beatmap))
-
-            jsonScores[str(player.userId)] = tempScores
-
+        jsonScores[str(user.userId)] = tempScores
         DataManager.setJson('lastScores', jsonScores)
+
+    async def getRecentPlays(self, bot, mode: str = ossapi.GameMode.OSU):
+        players = self.__db.getObjects('player')
+        for player in players:
+            await self.processRecentPlayerScores(bot, player, mode)
 
     async def updateUsers(self):
         players = self.__db.getObjects('player')
