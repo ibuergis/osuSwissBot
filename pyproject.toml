@@ -1,0 +1,17 @@
+[project]
+name = "osuswissbot"
+version = "0.1.0"
+description = "a discord bot that prepares a thumbnail with description nd title from an osu score"
+authors = [
+  {name = "Ian Bürgis", email = "ian@buergis.com" }
+]
+readme = "README.md"
+
+dependencies = [
+    "pillow",
+    "discord",
+    "ossapi",
+    "sqlalchemy",
+    "py-cord",
+    "pymysql",
+]

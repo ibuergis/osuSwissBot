@@ -32,7 +32,7 @@ class OsuHandler:
                                                     cursor={'page': page}).rankings)
         return players
 
-    async def getUsersFromWebsite(self, pages, gamemode='osu'):
+    async def getUsersFromWebsite(self, pages, gamemode='osuFeatures'):
         players = []
         for page in range(pages):
             page += 1
@@ -45,8 +45,8 @@ class OsuHandler:
                 SingleTD = regex.findall('<td.*?</td>', playerHtml)[:2]
                 rank = regex.findall('>.*?<', SingleTD[0])[0]
 
-                id = regex.findall('https://osu.ppy.sh/users/.*?/osu', SingleTD[1])[0].replace(
-                    'https://osu.ppy.sh/users/', '').replace('/osu', '')
+                id = regex.findall('https://osu.ppy.sh/users/.*?/osuFeatures', SingleTD[1])[0].replace(
+                    'https://osu.ppy.sh/users/', '').replace('/osuFeatures', '')
                 linking = regex.findall('<a.*?</a>', SingleTD[1])[1]
                 username = regex.findall('>.*?<', linking)[0]
 
@@ -68,7 +68,7 @@ class OsuHandler:
         beatmapset = beatmap.beatmapset()
         embed.set_author(name=f'Score done by {player.username}', url=f'https://osu.ppy.sh/scores/osu/{score.best_id}')
         embed.title = f'{beatmapset.artist} - {beatmapset.title} [{beatmap.version}]'
-        embed.url = f'https://osu.ppy.sh/beatmapsets/{beatmap.beatmapset_id}#osu/{beatmap.id}'
+        embed.url = f'https://osu.ppy.sh/beatmapsets/{beatmap.beatmapset_id}#osuFeatures/{beatmap.id}'
         embed.set_image(
             url=f'https://assets.ppy.sh/beatmaps/{beatmap.beatmapset_id}/covers/cover.jpg?1650602952')
 

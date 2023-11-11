@@ -55,21 +55,5 @@ sudo rm -rf Python-3.10.0*
 
 #### And lastly install dependencies for the program:
 ````
-pip3.10 install discord
-pip3.10 install pycord
-pip3.10 install ossapi
-pip3.10 install pillow
-pip3.10 install sqlalchemy
-pip3.10 install pymysql
-````
-
-or
-
-````
-pip install discord
-pip install pycord
-pip install ossapi
-pip install pillow
-pip install sqlalchemy
-pip install pymysql
+pip -m pip install .
 ````

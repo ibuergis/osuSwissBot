@@ -1,5 +1,5 @@
 from discord.ext import tasks, commands
-from osu import OsuHandler
+from src.osuFeatures.osuHandler import OsuHandler
 
 
 class Automation(commands.Cog):

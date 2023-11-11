@@ -1,8 +1,7 @@
-import os
-
 import discord
 import ossapi
-from prepareReplay import createAll, cleanup
+
+from src.prepareReplay.prepareReplayManager import createAll, cleanup
 
 
 class Thumbnail(discord.ui.View):
@@ -27,17 +26,17 @@ class Thumbnail(discord.ui.View):
         hasReplay = await createAll(self.osu, await self.osu.user(self.player, mode=self.score.mode), self.score,
                               self.beatmap)
 
-        thumbnail = discord.File(f'prepareReplay/output/{self.score.best_id}.jpg')
+        thumbnail = discord.File(f'data/output/{self.score.best_id}.jpg')
 
         if hasReplay:
-            replay = discord.File(f'prepareReplay/output/{self.score.best_id}.osr')
+            replay = discord.File(f'data/output/{self.score.best_id}.osr')
             files = [thumbnail, replay]
         else:
             error = f"**Score has no replay on the website**\n\n"
             files = [thumbnail]
 
-        description = open(f'prepareReplay/output/{self.score.best_id}Description', 'r').read()
-        title = open(f'prepareReplay/output/{self.score.best_id}Title', 'r').read().replace('#star#', '⭐')
+        description = open(f'data/output/{self.score.best_id}Description', 'r').read()
+        title = open(f'data/output/{self.score.best_id}Title', 'r').read().replace('#star#', '⭐')
 
         await interaction.message.reply(f'{error}title:\n```{title}```\ndescription:\n```{description}```', files=files)
         cleanup(self.score.best_id)

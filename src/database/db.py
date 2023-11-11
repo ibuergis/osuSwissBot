@@ -1,10 +1,8 @@
 from sqlalchemy import create_engine, Engine, Connection
-from sqlalchemy.orm import Session
-from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import text
 
 import entities
-from entities.entity import Entity
+from src.entities.entity import Entity
 
 
 class DB:

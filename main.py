@@ -36,20 +36,20 @@ if __name__ == '__main__':
         files = []
         if await osuHandler.prepareReplay(scoreid, description, shortentitle):
             error = ''
-            files.append(discord.File(f'prepareReplay/output/{scoreid}.osr'))
+            files.append(discord.File(f'data/output/{scoreid}.osr'))
         else:
             error = f"**Score has no replay on the website**\n\n"
 
-        files.append(discord.File(f'prepareReplay/output/{scoreid}.jpg'))
-        description = open(f'prepareReplay/output/{scoreid}Description', 'r').read()
-        title = open(f'prepareReplay/output/{scoreid}Title', 'r').read().replace('#star#', '⭐')
+        files.append(discord.File(f'data/output/{scoreid}.jpg'))
+        description = open(f'data/output/{scoreid}Description', 'r').read()
+        title = open(f'data/output/{scoreid}Title', 'r').read().replace('#star#', '⭐')
 
         await channel.send(f'{error}title:\n```{title}```\ndescription:\n```{description}```', files=files)
 
-        os.remove(f'prepareReplay/output/{scoreid}Description')
-        os.remove(f'prepareReplay/output/{scoreid}Title')
-        os.remove(f'prepareReplay/output/{scoreid}.jpg')
-        os.remove(f'prepareReplay/output/{scoreid}.osr')
+        os.remove(f'data/output/{scoreid}Description')
+        os.remove(f'data/output/{scoreid}Title')
+        os.remove(f'data/output/{scoreid}.jpg')
+        os.remove(f'data/output/{scoreid}.osr')
 
 
     @bot.slash_command()
@@ -58,7 +58,7 @@ if __name__ == '__main__':
         b = await file.to_file()
         c = file.save('/')
         await osuHandler.convertReplayFile(file.read())
-        await ctx.channel.send('I hate osu')
+        await ctx.channel.send('I hate osuFeatures')
 
 
     bot.run(config['botToken'])
