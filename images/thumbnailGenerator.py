@@ -1,3 +1,4 @@
+import os
 import re
 
 import ossapi
@@ -28,12 +29,12 @@ class ThumbnailGenerator:
 
     async def createThumbnail(self, osu: ossapi.Ossapi, player: User, score: Score, beatmap: Beatmap, description='', shortenTitle: bool = False):
         beatmapset = beatmap.beatmapset()
-        with open('images/temp/cover.jpg', 'wb+') as f:
+        with open(f'images/temp/{score.best_id}.jpg', 'wb+') as f:
             cover = requests.get(f'https://assets.ppy.sh/beatmaps/{beatmap.beatmapset_id}/covers/card@2x.jpg?1650700167').content
             f.write(cover)
             f.close()
 
-        with open('images/temp/pfp.png', 'wb+') as f:
+        with open(f'images/temp/{score.best_id}.png', 'wb+') as f:
             cover = requests.get(f'https://a.ppy.sh/{player.id}?1692642160.jpeg').content
             f.write(cover)
             f.close()
@@ -51,7 +52,7 @@ class ThumbnailGenerator:
 
         userFont = ImageFont.truetype('images/font/Aller_Bd.ttf', 60)
 
-        thumbnail = Image.open('images/temp/cover.jpg')
+        thumbnail = Image.open(f'images/temp/{score.best_id}.jpg')
         enhancer = ImageEnhance.Brightness(thumbnail)
         thumbnail = enhancer.enhance(0.5)
         thumbnail = thumbnail.crop((130, 0, 670, 280))
@@ -68,7 +69,7 @@ class ThumbnailGenerator:
 
         thumbnail.paste(template, (0, 0), template)
 
-        pfp = Image.open('images/temp/pfp.png').resize((300, 300)).convert('RGBA')
+        pfp = Image.open(f'images/temp/{score.best_id}.png').resize((300, 300)).convert('RGBA')
         pfp = await self.add_corners(pfp, 85)
         box = pfp.getbbox()
         width = box[2] - box[0]
@@ -148,10 +149,10 @@ class ThumbnailGenerator:
 
         thumbnail.paste(rank, (490, 450), rank)
 
-        thumbnail.save('images/output/thumbnail.jpg')
+        thumbnail.save(f'images/output/{score.best_id}.jpg')
 
-        description = open('images/output/description', 'w+')
-        title = open('images/output/title', 'w+')
+        description = open(f'images/output/{score.best_id}Description', 'w+')
+        title = open(f'images/output/{score.best_id}Title', 'w+')
 
         detailed: DifficultyAttributes = await osu.beatmap_attributes(beatmap.id, mods=score.mods)
         title.write(f'{player.username} | {beatmapset.artist} - {songTitle}[{beatmap.version}] {round(detailed.attributes.star_rating, 2)}#star# +{score.mods.short_name()}')
@@ -170,3 +171,6 @@ class ThumbnailGenerator:
         )
 
         description.close()
+
+        os.remove(f'images/temp/{score.best_id}.png')
+        os.remove(f'images/temp/{score.best_id}.jpg')

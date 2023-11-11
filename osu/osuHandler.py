@@ -148,7 +148,7 @@ class OsuHandler:
         await thumbnailGenerator.createThumbnail(self.__osu, player, score, beatmap, description, shortenTitle)
         try:
             replay = await self.__osu.download_score(ossapi.GameMode.OSU, score.best_id, raw=True)
-            with open('images/output/replay.osr', 'wb+') as f:
+            with open(f'images/output/{scoreId}.osr', 'wb+') as f:
                 f.write(replay)
                 f.close()
             replay = True

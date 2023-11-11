@@ -13,8 +13,7 @@ class DB:
     __connection: Connection
 
     def __init__(self, config):
-        password = open('database/password', 'r').read().strip()
-        sqlalchemy_database_URL = f'mysql+pymysql://{config["DBUser"]}:{config["DBPassword"]}@{"DBServer"}'
+        sqlalchemy_database_URL = f'mysql+pymysql://{config["DBUser"]}:{config["DBPassword"]}@{config["DBServer"]}'
         self.__engine = create_engine(sqlalchemy_database_URL)
         self.__connection = self.__engine.connect()
         self.__execute = lambda a: self.__connection.execute(text(a))

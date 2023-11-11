@@ -1,3 +1,5 @@
+import os
+
 import discord
 import ossapi
 from images import ThumbnailGenerator
@@ -26,14 +28,18 @@ class Thumbnail(discord.ui.View):
         await thumbnailGenerator.createThumbnail(self.osu, await self.osu.user(self.player, mode=self.score.mode), self.score, self.beatmap)
         try:
             replay = await self.osu.download_score(ossapi.GameMode.OSU, self.score.best_id, raw=True)
-            with open('images/output/replay.osr', 'wb+') as f:
+            with open(f'images/output/{self.score.best_id}.osr', 'wb+') as f:
                 f.write(replay)
                 f.close()
         except ValueError:
             error = f"**Score has no replay on the website**\n\n"
-        thumbnail = discord.File('images/output/thumbnail.jpg')
-        replay = discord.File('images/output/replay.osr')
-        description = open('images/output/description', 'r').read()
-        title = open('images/output/title', 'r').read().replace('#star#', '⭐')
+        thumbnail = discord.File(f'images/output/{self.score.best_id}.jpg')
+        replay = discord.File(f'images/output/{self.score.best_id}.osr')
+        description = open(f'images/output/{self.score.best_id}Description', 'r').read()
+        title = open(f'images/output/{self.score.best_id}Title', 'r').read().replace('#star#', '⭐')
         files = [thumbnail, replay] if error == '' else [thumbnail]
         await interaction.message.reply(f'{error}title:\n```{title}```\ndescription:\n```{description}```', files=files)
+        os.remove(f'images/output/{self.score.best_id}Description')
+        os.remove(f'images/output/{self.score.best_id}Title')
+        os.remove(f'images/output/{self.score.best_id}.jpg')
+        os.remove(f'images/output/{self.score.best_id}.osr')

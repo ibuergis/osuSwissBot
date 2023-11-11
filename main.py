@@ -1,3 +1,6 @@
+import json
+import os
+
 import discord
 from discord.ext import commands
 from discord.ext.commands.view import StringView
@@ -10,8 +13,9 @@ from botFeatures.commands import Automation
 from database import DB
 
 if __name__ == '__main__':
-    dm = DataManager()
-    config = dm.getJson('config/config.json')
+    with open('config/config.json', 'r') as f:
+        config: dict = json.load(f)
+        f.close()
 
     test = False
 
@@ -24,7 +28,7 @@ if __name__ == '__main__':
 
     @bot.event
     async def on_ready():
-        bot.mainChannel = bot.get_channel(config['scoresChannel'])
+        bot.mainChannel = bot.get_channel(int(config['scoresChannel']))
         bot.add_cog(Automation(bot=bot, osuHandler=osuHandler))
         print(f'{bot.user.name} has connected to Discord!')
 
@@ -33,16 +37,23 @@ if __name__ == '__main__':
     async def preparereplay(ctx, scoreid: int, description: str = '', shortentitle: bool = False):
         channel = bot.get_channel(ctx.channel_id)
         await ctx.respond('replay is being prepared')
-        files = [discord.File('images/output/thumbnail.jpg')]
+        files = []
         if await osuHandler.prepareReplay(scoreid, description, shortentitle):
             error = ''
-            files.append(discord.File('images/output/replay.osr'))
+            files.append(discord.File(f'images/output/{scoreid}.osr'))
         else:
             error = f"**Score has no replay on the website**\n\n"
 
-        description = open('images/output/description', 'r').read()
-        title = open('images/output/title', 'r').read().replace('#star#', '⭐')
+        files.append(discord.File(f'images/output/{scoreid}.jpg'))
+        description = open(f'images/output/{scoreid}Description', 'r').read()
+        title = open(f'images/output/{scoreid}Title', 'r').read().replace('#star#', '⭐')
+
         await channel.send(f'{error}title:\n```{title}```\ndescription:\n```{description}```', files=files)
+
+        os.remove(f'images/output/{scoreid}Description')
+        os.remove(f'images/output/{scoreid}Title')
+        os.remove(f'images/output/{scoreid}.jpg')
+        os.remove(f'images/output/{scoreid}.osr')
 
 
     @bot.slash_command()
