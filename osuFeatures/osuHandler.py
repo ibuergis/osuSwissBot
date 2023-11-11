@@ -1,11 +1,11 @@
 import ossapi
 from discord import Embed
 from dataManager import DataManager
-from database import DB
-from entities import Player
-from prepareReplay import createAll
+from database.db import DB
+from entities.player import Player
+from prepareReplay.prepareReplayManager import createAll
 import re as regex
-from botFeatures.buttons import Thumbnail
+from botFeatures.buttons.thumbnail import Thumbnail
 
 from ossapi import OssapiAsync, GameMode, RankingType, ScoreType
 from ossapi import Replay

@@ -4,9 +4,9 @@ import os
 import discord
 from discord.ext import commands
 
-from osu import OsuHandler
-from botFeatures.commands import Automation
-from database import DB
+from osuFeatures.osuHandler import OsuHandler
+from botFeatures.commands.automation import Automation
+from database.db import DB
 
 if __name__ == '__main__':
     with open('config/config.json', 'r') as f:

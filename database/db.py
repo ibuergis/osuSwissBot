@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import text
 
 import entities
-from entities import Entity
+from entities.entity import Entity
 
 
 class DB:
