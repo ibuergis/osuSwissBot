@@ -79,7 +79,7 @@ async def createThumbnail(user: User, score: Score, beatmap: Beatmap, descriptio
 
     pfp = Image.open(f'data/temp/{score.best_id}.png').resize((300, 300)).convert('RGBA')
     pfp = await add_corners(pfp, 85)
-
+    box = pfp.getbbox()
     thumbnail.paste(pfp, (812, 443), pfp)
 
     thumbnail = thumbnail.convert('RGB')
