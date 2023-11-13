@@ -1,7 +1,7 @@
 [project]
 name = "osuswissbot"
 version = "0.1.0"
-description = "a discord bot that prepares a thumbnail with description nd title from an osu score"
+description = "a discord bot that prepares a thumbnail with description and title from an osu score"
 authors = [
   {name = "Ian Bürgis", email = "ian@buergis.com" }
 ]
@@ -14,4 +14,6 @@ dependencies = [
     "sqlalchemy",
     "py-cord",
     "pymysql",
+    "osrparse",
+    "peace-performance-python"
 ]

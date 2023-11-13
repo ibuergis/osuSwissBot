@@ -1,4 +1,8 @@
-async def gradeCalculator(*, n300: int = 0, n100: int = 0, n50: int = 0, miss: int = 0):
+import ossapi
+from ossapi.enums import Grade
+
+
+async def gradeCalculator(n300: int = 0, n100: int = 0, n50: int = 0, miss: int = 0):
     objectCount = n300 + n100 + n50 + miss
 
     if objectCount == n300:
@@ -13,4 +17,22 @@ async def gradeCalculator(*, n300: int = 0, n100: int = 0, n50: int = 0, miss: i
         return 'C'
 
     return 'D'
+
+async def gradeConverter(grade: str, mods: ossapi.Mod) -> Grade:
+    special = False
+    if 'HD' in mods.short_name() or 'FL' in mods.short_name():
+        special = True
+
+    if grade == 'SS':
+        return Grade.SSH if special else Grade.SS
+    if grade == 'S':
+        return Grade.SH if special else Grade.S
+    if grade == 'A':
+        return Grade.A
+    if grade == 'B':
+        return Grade.B
+    if grade == 'C':
+        return Grade.C
+    if grade == 'D':
+        return Grade.D
 
