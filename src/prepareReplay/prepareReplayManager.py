@@ -1,4 +1,5 @@
 import os
+import re
 
 import ossapi
 from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ImageFilter
@@ -79,7 +80,6 @@ async def createThumbnail(user: User, score: Score, beatmap: Beatmap, descriptio
 
     pfp = Image.open(f'data/temp/{score.best_id}.png').resize((300, 300)).convert('RGBA')
     pfp = await add_corners(pfp, 85)
-    box = pfp.getbbox()
     thumbnail.paste(pfp, (812, 443), pfp)
 
     thumbnail = thumbnail.convert('RGB')
@@ -155,23 +155,28 @@ async def createTitle(osu: ossapi.OssapiAsync, user: User, score: Score, beatmap
 
 
 async def createDescription(user: User, score: Score, beatmap: Beatmap):
+    scoreLink = f'https://osu.ppy.sh/scores/osu/{score.best_id}'
+    page = requests.get(scoreLink).text.replace('\n', '')
+    if re.match('.*Page Missing.*', page):
+        scoreLink = 'not on the website'
+
     description = open(f'data/output/{score.best_id}Description', 'w+')
     description.write(
         f"This score was set on {score.created_at.strftime('%d.%m.%Y at %H:%M')}.\n"
         f"\n"
         f"Player: https://osu.ppy.sh/users/{user.id}\n"
         f"Beatmap: https://osu.ppy.sh/beatmaps/{beatmap.id}\n"
-        f"Score: https://osu.ppy.sh/scores/osu/{score.best_id}\n"
+        f"Score: {scoreLink}\n"
         f"\n"
         f"Join the osu swiss community in discord: https://discord.com/invite/SHz8QtD\n"
     )
     description.close()
 
 
-async def createReplayFile(osu: ossapi.OssapiAsync, score: Score, gamemode: ossapi.GameMode = ossapi.GameMode.OSU) -> bool:
-
+async def createReplayFile(osu: ossapi.OssapiAsync, score: Score,
+                           gamemode: ossapi.GameMode = ossapi.GameMode.OSU) -> bool:
     try:
-        replay = await osu.download_score(ossapi.GameMode.OSU, score.best_id, raw=True)
+        replay = await osu.download_score(gamemode, score.best_id, raw=True)
         with open(f'data/output/{score.best_id}.osr', 'wb+') as f:
             f.write(replay)
             f.close()
@@ -180,11 +185,13 @@ async def createReplayFile(osu: ossapi.OssapiAsync, score: Score, gamemode: ossa
         return False
 
 
-async def createAll(osu: ossapi.OssapiAsync, user: User, score: Score, beatmap: Beatmap, description='', shortenTitle: bool = False) -> bool:
+async def createAll(osu: ossapi.OssapiAsync, user: User, score: Score, beatmap: Beatmap, description='',
+                    shortenTitle: bool = False) -> bool:
     await createThumbnail(user, score, beatmap, description, shortenTitle)
     await createTitle(osu, user, score, beatmap, shortenTitle)
     await createDescription(user, score, beatmap)
-    return await createReplayFile(osu, score)
+    return await createReplayFile(osu, score, score.mode)
+
 
 def cleanup(scoreId: int):
     os.remove(f'data/temp/{scoreId}.png')
@@ -192,4 +199,7 @@ def cleanup(scoreId: int):
     os.remove(f'data/output/{scoreId}Description')
     os.remove(f'data/output/{scoreId}Title')
     os.remove(f'data/output/{scoreId}.jpg')
-    os.remove(f'data/output/{scoreId}.osr')
+    try:
+        os.remove(f'data/output/{scoreId}.osr')
+    except FileNotFoundError:
+        pass

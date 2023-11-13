@@ -1,12 +1,12 @@
 import json
-import os
 
 import discord
 from discord.ext import commands
 
-from osuFeatures.osuHandler import OsuHandler
-from botFeatures.commands.automation import Automation
-from database.db import DB
+from src.osuFeatures.osuHandler import OsuHandler
+from src.botFeatures.commands.automation import Automation
+from src.database.db import DB
+from src.prepareReplay.prepareReplayManager import cleanup
 
 if __name__ == '__main__':
     with open('config/config.json', 'r') as f:
@@ -45,20 +45,23 @@ if __name__ == '__main__':
         title = open(f'data/output/{scoreid}Title', 'r').read().replace('#star#', '⭐')
 
         await channel.send(f'{error}title:\n```{title}```\ndescription:\n```{description}```', files=files)
+        await cleanup(scoreid)
 
-        os.remove(f'data/output/{scoreid}Description')
-        os.remove(f'data/output/{scoreid}Title')
-        os.remove(f'data/output/{scoreid}.jpg')
-        os.remove(f'data/output/{scoreid}.osr')
 
 
     @bot.slash_command()
     async def preparereplayfromfile(ctx, file: discord.Attachment):
-        a = file.read()
-        b = await file.to_file()
-        c = file.save('/')
-        await osuHandler.convertReplayFile(file.read())
-        await ctx.channel.send('I hate osuFeatures')
+        channel = bot.get_channel(ctx.channel_id)
+        await ctx.respond('replay is being prepared')
+
+        score = await osuHandler.prepareReplayFromFile(ctx, file)
+
+        thumbnail = discord.File(f'data/output/{score.best_id}.jpg')
+        description = open(f'data/output/{score.best_id}Description', 'r').read()
+        title = open(f'data/output/{score.best_id}Title', 'r').read().replace('#star#', '⭐')
+
+        await channel.send(f'title:\n```{title}```\ndescription:\n```{description}```', file=thumbnail)
+        cleanup(score.best_id)
 
 
     bot.run(config['botToken'])
