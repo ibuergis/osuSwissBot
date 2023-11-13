@@ -55,12 +55,11 @@ if __name__ == '__main__':
         await ctx.respond('replay is being prepared')
 
         score = await osuHandler.prepareReplayFromFile(ctx, file)
-
-        thumbnail = discord.File(f'data/output/{score.best_id}.jpg')
+        files = [await file.to_file(), discord.File(f'data/output/{score.best_id}.jpg')]
         description = open(f'data/output/{score.best_id}Description', 'r').read()
         title = open(f'data/output/{score.best_id}Title', 'r').read().replace('#star#', '⭐')
 
-        await channel.send(f'title:\n```{title}```\ndescription:\n```{description}```', file=thumbnail)
+        await channel.send(f'title:\n```{title}```\ndescription:\n```{description}```', files=files)
         cleanup(score.best_id)
 
 
