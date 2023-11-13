@@ -1,19 +1,20 @@
-from typing import Any
-from osuFeatures.scoreCalculator import calculateScoreViaApi
 import osrparse
-import ossapi
 from discord import Embed
-from src.dataManager import DataManager
-from database.db import DB
-from entities.player import Player
-from prepareReplay.prepareReplayManager import createAll
-import re as regex
-from botFeatures.buttons.thumbnail import Thumbnail
-import os
-from osuFeatures.calculations import gradeCalculator, gradeConverter
 
-from ossapi import OssapiAsync, GameMode, RankingType, ScoreType
-from ossapi import Replay
+import ossapi
+from ossapi import OssapiAsync, GameMode, RankingType, ScoreType, Replay
+
+import os
+import re as regex
+
+from .calculations import gradeCalculator, gradeConverter
+from .scoreCalculator import calculateScoreViaApi
+
+from ..dataManager import DataManager
+from ..database import DB
+from ..entities import Player
+from ..prepareReplay import createAll
+from ..botFeatures import Thumbnail
 
 from urllib.request import urlopen
 
@@ -99,7 +100,7 @@ class OsuHandler:
 
     async def processRecentPlayerScores(self, bot, user, mode):
         scores = await self.__osu.user_scores(user.userId, ScoreType.RECENT, include_fails=False, limit=20, mode=mode)
-        jsonScores = DataManager.getJson('lastScores')
+        jsonScores = DataManager.getOrCreateJson('lastScores')
         tempScores = []
         for score in scores:
             score: ossapi.Score
@@ -151,7 +152,7 @@ class OsuHandler:
         replay = await createAll(self.__osu, player, score, beatmap, description, shortenTitle)
         return replay
 
-    async def convertReplayFile(self, file) -> Replay | Any:
+    async def convertReplayFile(self, file) -> Replay:
         replay = osrparse.Replay.from_file(file)
         ossapiReplay = ossapi.Replay(replay, self.__osu)
 

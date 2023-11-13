@@ -1,11 +1,13 @@
+import requests
+
 import os
 import re
 
 import ossapi
-from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ImageFilter
 from ossapi import User, Score, Beatmap
-import requests
 from ossapi.models import DifficultyAttributes
+
+from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ImageFilter
 
 
 def getTextLength(font, text):

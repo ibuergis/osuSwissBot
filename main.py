@@ -45,7 +45,7 @@ if __name__ == '__main__':
         title = open(f'data/output/{scoreid}Title', 'r').read().replace('#star#', '⭐')
 
         await channel.send(f'{error}title:\n```{title}```\ndescription:\n```{description}```', files=files)
-        await cleanup(scoreid)
+        cleanup(scoreid)
 
 
 

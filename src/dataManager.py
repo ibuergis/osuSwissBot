@@ -44,6 +44,18 @@ class DataManager:
 
             return data
 
+    @staticmethod
+    def getOrCreateJson(name: str = '') -> dict | None:
+        if DataManager.jsonExists(name):
+            with open(os.getcwd() + '//data//' + name + '.json', 'r') as f:
+                data: dict = json.load(f)
+                f.close()
+
+        else:
+            return {}
+
+        return data
+
 
 
 
