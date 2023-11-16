@@ -6,7 +6,7 @@ from peace_performance_python import Calculator, Beatmap
 from src.osuFeatures.mirrors.osuDirect import OsuDirect
 
 
-async def calculateScoreViaApi(mapId: int, *, s100: int = 0, s50: int = 0, miss: int = 0, mods: list = [], combo: int | None = None, rework: str = 'live'):
+async def calculateScoreViaApi(mapId: int, *, s100: int = 0, s50: int = 0, miss: int = 0, mods: list = [], combo: int | None = None, rework: str = 'live') -> dict:
     link = 'https://pp-api.huismetbenen.nl/calculate-score'
 
     request = {

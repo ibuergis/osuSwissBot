@@ -1,4 +1,6 @@
-from sqlalchemy import create_engine, Engine, Connection
+from typing import Any
+
+from sqlalchemy import create_engine, Engine, Connection, Sequence
 from sqlalchemy import text
 
 import entities
@@ -16,11 +18,11 @@ class DB:
         self.__connection = self.__engine.connect()
         self.__execute = lambda a: self.__connection.execute(text(a))
 
-    def getObjectFromEntity(self, entityName: str, values: list):
+    def getObjectFromEntity(self, entityName: str, values: list) -> StandardEntity:
         Entity: StandardEntity = getattr(entities, entityName)
         return Entity(values)
 
-    def get(self, table: str, row: str = '*', filter: dict = None):
+    def get(self, table: str, row: str = '*', filter: dict = None) -> Any:
         table = table.lower()
         allFilter = []
         for rowName, value in filter.items():
@@ -35,7 +37,7 @@ class DB:
             finishedFilter = ''
         return self.__execute(f'SELECT {row} FROM {table}{finishedFilter}').all()
 
-    def getObjects(self, table: str, row: str = '*', filter: dict = {}):
+    def getObjects(self, table: str, row: str = '*', filter: dict = {}) -> list[StandardEntity]:
         values = self.get(table, row, filter)
         entityName = table[0].upper() + table[1:].lower()
         objects = []

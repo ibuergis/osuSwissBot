@@ -1,4 +1,5 @@
 from msilib.schema import File
+from typing import Any
 
 import osrparse
 from discord import Embed
@@ -22,7 +23,7 @@ from ..botFeatures import Thumbnail
 from urllib.request import urlopen
 
 
-async def getUsersFromWebsite(pages: int, gamemode='osu'):
+async def getUsersFromWebsite(pages: int, gamemode='osu') -> list[dict[str | int, Any]]:
     players = []
     for page in range(pages):
         page += 1
@@ -51,7 +52,7 @@ async def getUsersFromWebsite(pages: int, gamemode='osu'):
     return players
 
 
-async def createScoreEmbed(player: Player, score: ossapi.Score, beatmap: ossapi.Beatmap):
+async def createScoreEmbed(player: Player, score: ossapi.Score, beatmap: ossapi.Beatmap) -> Embed:
     mods = score.mods.short_name()
     if mods == '':
         mods = 'NM'
@@ -74,7 +75,7 @@ async def createScoreEmbed(player: Player, score: ossapi.Score, beatmap: ossapi.
     return embed
 
 
-async def convertModsToList(mods: ossapi.Mod):
+async def convertModsToList(mods: ossapi.Mod) -> list[str]:
     mod = mods.short_name()
     if mod == 'NM':
         mod = ''
@@ -93,7 +94,7 @@ class OsuHandler:
                                  config['clientSecret'], 'http://localhost:3914/', ['public', 'identify'],
                                  grant="authorization")
 
-    async def getUsersFromAPI(self, pages: int, gamemode: GameMode.OSU):
+    async def getUsersFromAPI(self, pages: int, gamemode: GameMode.OSU) -> list[ossapi.User]:
         players = []
         for page in range(pages):
             page += 1
@@ -129,7 +130,7 @@ class OsuHandler:
         DataManager.setJson('lastScores', jsonScores)
 
     async def getRecentPlays(self, bot: commands.Bot, mode: str = ossapi.GameMode.OSU):
-        players = self.__db.getObjects('player')
+        players: list[Player] = self.__db.getObjects('player')
         for player in players:
             await self.processRecentPlayerScores(bot, player, mode)
 
@@ -161,7 +162,7 @@ class OsuHandler:
 
         return ossapiReplay
 
-    async def prepareReplayFromFile(self, ctx, file: File, description: str = '', shortenTitle: bool = False):
+    async def prepareReplayFromFile(self, ctx, file: File, description: str = '', shortenTitle: bool = False) -> ossapi.Score:
         await file.save(f'data/output/{ctx.author.id}.osr')
         file = open(f'data/output/{ctx.author.id}.osr', 'rb')
         replay = await self.convertReplayFile(file)

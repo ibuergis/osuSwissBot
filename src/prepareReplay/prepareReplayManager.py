@@ -11,7 +11,7 @@ from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ImageFilter
 from ..osuFeatures import calculateScoreViaApi
 
 
-def getTextLength(font: ImageFont, text: str):
+def getTextLength(font: ImageFont, text: str) -> int:
     return font.getbbox(text)[2]
 
 
@@ -19,7 +19,7 @@ def getFont(size: int) -> ImageFont:
     return ImageFont.truetype('data/font/Aller_Bd.ttf', size)
 
 
-async def shortenSongTitle(songTitle: str):
+async def shortenSongTitle(songTitle: str) -> str:
     songTitle = songTitle.split('(feat.', 1)
     if len(songTitle) < 2:
         songTitle = songTitle[0].split('feat.', 1)
