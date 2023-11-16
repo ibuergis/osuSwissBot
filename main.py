@@ -29,7 +29,7 @@ if __name__ == '__main__':
     async def on_ready():
         global funCommands
         global emojis
-        emojis: Emojis = Emojis(bot)
+        emojis = Emojis(bot)
         funCommands = FunCommands(emojis)
         bot.mainChannel = bot.get_channel(int(config['scoresChannel']))
         bot.add_cog(Automation(bot=bot, osuHandler=osuHandler))
@@ -54,7 +54,9 @@ if __name__ == '__main__':
         await channel.send(f'{error}title:\n```{title}```\ndescription:\n```{description}```', files=files)
         cleanup(scoreid)
 
-
+    @bot.slash_command()
+    async def invite(ctx: discord.SlashCommand):
+        ctx
 
     @bot.slash_command()
     async def preparereplayfromfile(ctx, file: discord.Attachment):
