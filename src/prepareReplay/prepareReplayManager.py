@@ -118,7 +118,7 @@ async def createThumbnail(user: User, score: Score, beatmap: Beatmap, descriptio
     x = (thumbnail.width - getTextLength(getFont(60), artist)) // 2
     drawer.text((x, 30), artist, font=getFont(60), fill=(222, 222, 222))
 
-    songTitle = shortenSongTitle(beatmapset.title) if shortenTitle else beatmapset.title
+    songTitle = await shortenSongTitle(beatmapset.title) if shortenTitle else beatmapset.title
 
     x = (thumbnail.width - getTextLength(getFont(70), songTitle)) // 2
     drawer.text((x, 120), songTitle, font=getFont(70), fill=(255, 255, 255))
@@ -148,7 +148,7 @@ async def createThumbnail(user: User, score: Score, beatmap: Beatmap, descriptio
 
 async def createTitle(osu: ossapi.OssapiAsync, user: User, score: Score, beatmap: Beatmap, shortenTitle: bool = False):
     beatmapset = beatmap.beatmapset()
-    songTitle = shortenSongTitle(beatmapset.title) if shortenTitle else beatmapset.title
+    songTitle = await shortenSongTitle(beatmapset.title) if shortenTitle else beatmapset.title
     detailed: DifficultyAttributes = await osu.beatmap_attributes(beatmap.id, mods=score.mods)
     title = open(f'data/output/{score.best_id}Title', 'w+')
     title.write(
