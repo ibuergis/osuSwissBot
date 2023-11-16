@@ -3,10 +3,10 @@ import json
 import discord
 from discord.ext import commands
 
-from src.osuFeatures.osuHandler import OsuHandler
-from src.botFeatures.commands.automation import Automation
-from src.database.db import DB
-from src.prepareReplay.prepareReplayManager import cleanup
+from src.osuFeatures import OsuHandler
+from src.botFeatures import Automation, FunCommands, Emojis
+from src.database import DB
+from src.prepareReplay import cleanup
 
 if __name__ == '__main__':
     with open('config/config.json', 'r') as f:
@@ -22,8 +22,15 @@ if __name__ == '__main__':
 
     osuHandler: OsuHandler = OsuHandler(db, config, test)
 
+    funCommands = None
+    emojis = None
+
     @bot.event
     async def on_ready():
+        global funCommands
+        global emojis
+        emojis: Emojis = Emojis(bot)
+        funCommands = FunCommands(emojis)
         bot.mainChannel = bot.get_channel(int(config['scoresChannel']))
         bot.add_cog(Automation(bot=bot, osuHandler=osuHandler))
         print(f'{bot.user.name} has connected to Discord!')
@@ -61,6 +68,10 @@ if __name__ == '__main__':
 
         await channel.send(f'title:\n```{title}```\ndescription:\n```{description}```', files=files)
         cleanup(score.best_id)
+
+    @bot.event
+    async def on_message(ctx: discord.Message):
+        await funCommands.checkForShitpost(ctx, ctx.content)
 
 
     bot.run(config['botToken'])
