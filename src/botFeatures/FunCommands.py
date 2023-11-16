@@ -1,13 +1,17 @@
 import discord
 from .emojis import Emojis
 
+
 class FunCommands:
+
+    bot: discord.Bot
 
     emojis: Emojis
 
-    def __init__(self, emojis: Emojis):
+    def __init__(self, bot, emojis: Emojis):
+        self.bot = bot
         self.emojis = emojis
 
-    async def checkForShitpost(self, ctx: discord.Message, phrase: str):
+    async def checkForEasterEgg(self, ctx: discord.Message, phrase: str):
         if 'sata andagi' in phrase:
             await ctx.add_reaction(self.emojis.sataAndagi)

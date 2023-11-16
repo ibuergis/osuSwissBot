@@ -30,7 +30,7 @@ if __name__ == '__main__':
         global funCommands
         global emojis
         emojis = Emojis(bot)
-        funCommands = FunCommands(emojis)
+        funCommands = FunCommands(bot, emojis)
         bot.mainChannel = bot.get_channel(int(config['scoresChannel']))
         bot.add_cog(Automation(bot=bot, osuHandler=osuHandler))
         print(f'{bot.user.name} has connected to Discord!')
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     @bot.event
     async def on_message(ctx: discord.Message):
         if funCommands != None:
-            await funCommands.checkForShitpost(ctx, ctx.content)
+            await funCommands.checkForEasterEgg(ctx, ctx.content)
 
 
     bot.run(config['botToken'])
