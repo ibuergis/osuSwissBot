@@ -11,15 +11,15 @@ from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ImageFilter
 from ..osuFeatures import calculateScoreViaApi
 
 
-def getTextLength(font, text):
+def getTextLength(font: ImageFont, text: str) -> int:
     return font.getbbox(text)[2]
 
 
-def getFont(size) -> ImageFont:
+def getFont(size: int) -> ImageFont:
     return ImageFont.truetype('data/font/Aller_Bd.ttf', size)
 
 
-async def shortenSongTitle(songTitle: str):
+async def shortenSongTitle(songTitle: str) -> str:
     songTitle = songTitle.split('(feat.', 1)
     if len(songTitle) < 2:
         songTitle = songTitle[0].split('feat.', 1)
@@ -33,7 +33,7 @@ async def shortenSongTitle(songTitle: str):
     return songTitle
 
 
-async def add_corners(im, rad) -> Image:
+async def add_corners(im: Image, rad: int) -> Image:
     # Copypasted LMAO
     circle = Image.new('L', (rad * 2, rad * 2), 0)
     draw = ImageDraw.Draw(circle)
@@ -49,7 +49,7 @@ async def add_corners(im, rad) -> Image:
     return im
 
 
-async def createThumbnail(user: User, score: Score, beatmap: Beatmap, description='', shortenTitle: bool = False):
+async def createThumbnail(user: User, score: Score, beatmap: Beatmap, description: str = '', shortenTitle: bool = False):
     beatmapset = beatmap.beatmapset()
 
     with open(f'data/temp/{score.best_id}.jpg', 'wb+') as f:
