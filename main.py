@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     osuHandler: OsuHandler = OsuHandler(db, config, test)
 
-    funCommands = None
+    funCommands: FunCommands | None = None
     emojis = None
 
     @bot.event
@@ -35,11 +35,25 @@ if __name__ == '__main__':
         bot.add_cog(Automation(bot=bot, osuHandler=osuHandler))
         print(f'{bot.user.name} has connected to Discord!')
 
+    @bot.slash_command()
+    async def invite(ctx: discord.ApplicationContext):
+        await ctx.response.send_message(
+            'discord server: https://discord.gg/qKvZvuJ6nP\n' +
+            'invite link: https://discord.com/api/oauth2/authorize?client_id=1152379249928446074&permissions=1084479634496&scope=bot',
+            ephemeral=True)
+
 
     @bot.slash_command()
-    async def preparereplay(ctx, scoreid: int, description: str = '', shortentitle: bool = False):
+    async def github(ctx: discord.ApplicationContext):
+        await ctx.response.send_message(
+            'https://github.com/ianbuergis/osuSwissBot',
+            ephemeral=True)
+
+    @bot.slash_command()
+    async def preparereplay(ctx: discord.ApplicationContext, scoreid: int, description: str = '', shortentitle: bool = False):
         channel = bot.get_channel(ctx.channel_id)
         await ctx.respond('replay is being prepared')
+        await ctx.trigger_typing()
         files = []
         if await osuHandler.prepareReplay(scoreid, description, shortentitle):
             error = ''
@@ -55,13 +69,10 @@ if __name__ == '__main__':
         cleanup(scoreid)
 
     @bot.slash_command()
-    async def invite(ctx: discord.SlashCommand):
-        ctx
-
-    @bot.slash_command()
     async def preparereplayfromfile(ctx, file: discord.Attachment):
         channel = bot.get_channel(ctx.channel_id)
         await ctx.respond('replay is being prepared')
+        await ctx.trigger_typing()
 
         score = await osuHandler.prepareReplayFromFile(ctx, file)
         files = [await file.to_file(), discord.File(f'data/output/{score.best_id}.jpg')]
@@ -73,7 +84,8 @@ if __name__ == '__main__':
 
     @bot.event
     async def on_message(ctx: discord.Message):
-        await funCommands.checkForShitpost(ctx, ctx.content)
+        if funCommands != None:
+            await funCommands.checkForShitpost(ctx, ctx.content)
 
 
     bot.run(config['botToken'])
