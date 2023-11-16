@@ -69,12 +69,12 @@ if __name__ == '__main__':
         cleanup(scoreid)
 
     @bot.slash_command()
-    async def preparereplayfromfile(ctx, file: discord.Attachment):
+    async def preparereplayfromfile(ctx, file: discord.Attachment, description: str = '', shortentitle: bool = False):
         channel = bot.get_channel(ctx.channel_id)
         await ctx.respond('replay is being prepared')
         await ctx.trigger_typing()
 
-        score = await osuHandler.prepareReplayFromFile(ctx, file)
+        score = await osuHandler.prepareReplayFromFile(ctx, file, description, shortentitle)
         files = [await file.to_file(), discord.File(f'data/output/{score.best_id}.jpg')]
         description = open(f'data/output/{score.best_id}Description', 'r').read()
         title = open(f'data/output/{score.best_id}Title', 'r').read().replace('#star#', '⭐')
@@ -84,9 +84,8 @@ if __name__ == '__main__':
 
     @bot.event
     async def on_message(ctx: discord.Message):
-        if funCommands != None:
+        if funCommands is not None:
             await funCommands.checkForShitpost(ctx, ctx.content)
 
 
     bot.run(config['botToken'])
-
