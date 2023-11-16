@@ -158,7 +158,7 @@ class OsuHandler:
 
         return ossapiReplay
 
-    async def prepareReplayFromFile(self, ctx, file):
+    async def prepareReplayFromFile(self, ctx, file, description: str = '', shortenTitle: bool = False):
         await file.save(f'data/output/{ctx.author.id}.osr')
         file = open(f'data/output/{ctx.author.id}.osr', 'rb')
         replay = await self.convertReplayFile(file)
@@ -182,6 +182,6 @@ class OsuHandler:
         score.rank = await gradeConverter(grade, replay.mods)
         score.created_at = replay.timestamp
         score.mode = replay.mode
-        await createAll(self.__osu, user, score, beatmap)
+        await createAll(self.__osu, user, score, beatmap, description, shortenTitle)
 
         return score
