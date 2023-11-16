@@ -1,4 +1,5 @@
 import discord
+from discord.ext import commands
 from .emojis import Emojis
 
 
@@ -8,7 +9,7 @@ class FunCommands:
 
     emojis: Emojis
 
-    def __init__(self, bot, emojis: Emojis):
+    def __init__(self, bot: commands.Bot, emojis: Emojis):
         self.bot = bot
         self.emojis = emojis
 

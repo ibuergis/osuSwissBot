@@ -7,7 +7,7 @@ class Automation(commands.Cog):
 
     __osuHandler: OsuHandler
 
-    def __init__(self, bot, osuHandler):
+    def __init__(self, bot: commands.Bot, osuHandler: OsuHandler):
         self.__bot = bot
         self.__osuHandler = osuHandler
 

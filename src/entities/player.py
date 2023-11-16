@@ -1,7 +1,7 @@
 from .entity import Entity
 
-class Player(Entity):
 
+class Player(Entity):
     id: int
 
     userId: str
@@ -10,7 +10,7 @@ class Player(Entity):
 
     rank: int
 
-    def __init__(self, values):
+    def __init__(self, values: list):
         self.id = values[0]
         self.userId = values[1]
         self.username = values[2]
@@ -23,4 +23,3 @@ class Player(Entity):
             self.username,
             self.rank
         ]
-

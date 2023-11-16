@@ -1,5 +1,8 @@
+from msilib.schema import File
+
 import osrparse
 from discord import Embed
+from discord.ext import commands
 
 import ossapi
 from ossapi import OssapiAsync, GameMode, RankingType, ScoreType, Replay
@@ -19,7 +22,7 @@ from ..botFeatures import Thumbnail
 from urllib.request import urlopen
 
 
-async def getUsersFromWebsite(pages, gamemode='osu'):
+async def getUsersFromWebsite(pages: int, gamemode='osu'):
     players = []
     for page in range(pages):
         page += 1
@@ -84,21 +87,21 @@ class OsuHandler:
 
     __osu: OssapiAsync
 
-    def __init__(self, db, config, test=False):
+    def __init__(self, db: DB, config: dict):
         self.__db = db
         self.__osu = OssapiAsync(int(config['clientId']),
                                  config['clientSecret'], 'http://localhost:3914/', ['public', 'identify'],
                                  grant="authorization")
 
-    async def getUsersFromAPI(self, pages):
+    async def getUsersFromAPI(self, pages: int, gamemode: GameMode.OSU):
         players = []
         for page in range(pages):
             page += 1
-            players.extend(await self.__osu.ranking(GameMode.OSU, RankingType.PERFORMANCE, country='ch',
+            players.extend(await self.__osu.ranking(gamemode, RankingType.PERFORMANCE, country='ch',
                                                     cursor={'page': page}).rankings)
         return players
 
-    async def processRecentPlayerScores(self, bot, user, mode):
+    async def processRecentPlayerScores(self, bot: commands.Bot, user: Player, mode: GameMode.OSU):
         scores = await self.__osu.user_scores(user.userId, ScoreType.RECENT, include_fails=False, limit=20, mode=mode)
         jsonScores = DataManager.getOrCreateJson('lastScores')
         tempScores = []
@@ -125,7 +128,7 @@ class OsuHandler:
         jsonScores[str(user.userId)] = tempScores
         DataManager.setJson('lastScores', jsonScores)
 
-    async def getRecentPlays(self, bot, mode: str = ossapi.GameMode.OSU):
+    async def getRecentPlays(self, bot: commands.Bot, mode: str = ossapi.GameMode.OSU):
         players = self.__db.getObjects('player')
         for player in players:
             await self.processRecentPlayerScores(bot, player, mode)
@@ -152,13 +155,13 @@ class OsuHandler:
         replay = await createAll(self.__osu, player, score, beatmap, description, shortenTitle)
         return replay
 
-    async def convertReplayFile(self, file) -> Replay:
+    async def convertReplayFile(self, file: File) -> Replay:
         replay = osrparse.Replay.from_file(file)
         ossapiReplay = ossapi.Replay(replay, self.__osu)
 
         return ossapiReplay
 
-    async def prepareReplayFromFile(self, ctx, file, description: str = '', shortenTitle: bool = False):
+    async def prepareReplayFromFile(self, ctx, file: File, description: str = '', shortenTitle: bool = False):
         await file.save(f'data/output/{ctx.author.id}.osr')
         file = open(f'data/output/{ctx.author.id}.osr', 'rb')
         replay = await self.convertReplayFile(file)

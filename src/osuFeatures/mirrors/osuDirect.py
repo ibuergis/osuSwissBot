@@ -11,7 +11,7 @@ class OsuDirect:
         file = requests.get(a, f'data/beatmaps/{beatmap.id}.osu')
         return file
 
-    async def getBeatmapFile(self, beatmap):
+    async def getBeatmapFile(self, beatmap: ossapi.Beatmap):
         file = await self.getBeatmapFileRaw(beatmap)
         with open(f'data/beatmaps/{beatmap.id}.osu', 'w+') as f:
             f.write(file)
