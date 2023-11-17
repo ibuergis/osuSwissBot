@@ -8,7 +8,6 @@ from ossapi import User, Score, Beatmap
 from ossapi.models import DifficultyAttributes
 
 from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ImageFilter
-from ..osuFeatures import calculateScoreViaApi
 
 
 def getTextLength(font: ImageFont, text: str) -> int:
@@ -125,13 +124,13 @@ async def createThumbnail(user: User, score: Score, beatmap: Beatmap, descriptio
     n = 2
     mods = [mod[i:i + n] for i in range(0, len(mod), n)]
 
-    if score.pp is None:
-        calculated = await calculateScoreViaApi(beatmap.id, s100=score.statistics.count_100, s50=score.statistics.count_50,
-                                                miss=score.statistics.count_miss, mods=mods, combo=score.max_combo)
-        score.pp = calculated['local_pp']
-    pp = f"{int(score.pp)}pp"
+    pp = None if score.pp is None else f"{int(score.pp)}pp"
 
-    drawer.text((1260, 400), pp, font=getFont(100), fill=(255, 255, 255))
+    if score.pp is None:
+        heart = Image.open('data/misc/heart.png').resize((150, 150))
+        thumbnail.paste(heart, (1390, 390), heart)
+    else:
+        drawer.text((1260, 400), pp, font=getFont(100), fill=(255, 255, 255))
 
     avg = len(mods) / 2
     for id in range(len(mods)):
