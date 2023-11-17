@@ -15,5 +15,4 @@ dependencies = [
     "py-cord",
     "pymysql",
     "osrparse",
-    "peace-performance-python"
 ]
