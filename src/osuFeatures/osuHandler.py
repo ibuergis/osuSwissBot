@@ -11,8 +11,7 @@ from ossapi import OssapiAsync, GameMode, RankingType, ScoreType, Replay
 import os
 import re as regex
 
-from .calculations import gradeCalculator, gradeConverter
-from .scoreCalculator import calculateScoreViaApi
+from .calculations import gradeCalculator, gradeConverter, calculateScoreViaApi
 
 from ..dataManager import DataManager
 from ..database.db import DB
