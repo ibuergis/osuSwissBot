@@ -2,3 +2,4 @@ osuSwissBot.egg-info/
 build/
 config/config.json
 data/lastScores.json
+.idea
