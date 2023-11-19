@@ -175,8 +175,7 @@ async def createDescription(user: User, score: Score, beatmap: Beatmap):
     description.close()
 
 
-async def createReplayFile(osu: ossapi.OssapiAsync, score: Score,
-                           gamemode: ossapi.GameMode = ossapi.GameMode.OSU) -> bool:
+async def createReplayFile(osu: ossapi.OssapiAsync, score: Score, gamemode: ossapi.GameMode = ossapi.GameMode.OSU) -> bool:
     try:
         replay = await osu.download_score(gamemode, score.best_id, raw=True)
         with open(f'data/output/{score.best_id}.osr', 'wb+') as f:
