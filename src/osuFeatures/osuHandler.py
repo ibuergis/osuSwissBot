@@ -15,10 +15,10 @@ from .calculations import gradeCalculator, gradeConverter
 from .scoreCalculator import calculateScoreViaApi
 
 from ..dataManager import DataManager
-from ..database import DB
-from ..entities import Player
-from ..prepareReplay import createAll
-from ..botFeatures import Thumbnail
+from ..database.db import DB
+from ..entities.player import Player
+from ..prepareReplay.prepareReplayManager import createAll
+from ..botFeatures.buttons.thumbnail import Thumbnail
 
 from urllib.request import urlopen
 

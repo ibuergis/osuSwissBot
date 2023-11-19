@@ -3,10 +3,12 @@ import json
 import discord
 from discord.ext import commands
 
-from src.osuFeatures import OsuHandler
-from src.botFeatures import Automation, FunCommands, Emojis
-from src.database import DB
-from src.prepareReplay import cleanup
+from src.osuFeatures.osuHandler import OsuHandler
+from src.botFeatures.automation import Automation
+from src.botFeatures.funCommands import FunCommands
+from src.botFeatures.emojis import Emojis
+from src.database.db import DB
+from src.prepareReplay.prepareReplayManager import cleanup
 
 if __name__ == '__main__':
     with open('config/config.json', 'r') as f:
