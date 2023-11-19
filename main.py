@@ -15,14 +15,12 @@ if __name__ == '__main__':
         config: dict = json.load(f)
         f.close()
 
-    test = False
-
     intents = discord.Intents.all()
     bot = commands.Bot(intents=intents, command_prefix='$')
 
     db = DB(config)
 
-    osuHandler: OsuHandler = OsuHandler(db, config, test)
+    osuHandler: OsuHandler = OsuHandler(db, config)
 
     funCommands: FunCommands | None = None
     emojis = None
@@ -34,7 +32,7 @@ if __name__ == '__main__':
         emojis = Emojis(bot)
         funCommands = FunCommands(bot, emojis)
         bot.mainChannel = bot.get_channel(int(config['scoresChannel']))
-        bot.add_cog(Automation(bot=bot, osuHandler=osuHandler))
+        bot.add_cog(Automation(bot=bot, osuHandler=osuHandler, checkPlays=config['checkRecentPlays']))
         print(f'{bot.user.name} has connected to Discord!')
 
     @bot.slash_command()

@@ -7,12 +7,16 @@ class Automation(commands.Cog):
 
     __osuHandler: OsuHandler
 
-    def __init__(self, bot: commands.Bot, osuHandler: OsuHandler):
+    def __init__(self, bot: commands.Bot, osuHandler: OsuHandler, checkPlays: bool = True):
         self.__bot = bot
         self.__osuHandler = osuHandler
 
-        self.updateUsers.start()
-        self.getScores.start()
+        if checkPlays:
+            print('Recent scores are getting checked')
+            self.updateUsers.start()
+            self.getScores.start()
+        else:
+            print('Recent scores are not getting checked')
 
     @tasks.loop(hours=23)
     async def updateUsers(self):
