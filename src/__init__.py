@@ -6,6 +6,5 @@ from .entities.entity import *
 from .entities.player import *
 from .osuFeatures.osuHandler import *
 from .osuFeatures.calculations import *
-from .osuFeatures.scoreCalculator import *
 from .prepareReplay.prepareReplayManager import *
 from .dataManager import *
