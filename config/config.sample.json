@@ -5,5 +5,6 @@
   "DBPassword": "",
   "clientId": "",
   "clientSecret": "",
-  "scoresChannel": ""
+  "scoresChannel": "",
+  "checkRecentPlays": true
 }
