@@ -20,9 +20,9 @@ async def gradeCalculator(n300: int = 0, n100: int = 0, n50: int = 0, miss: int 
 
 
 async def gradeConverter(grade: str, mods: ossapi.Mod) -> Grade:
-    special = False
-    if 'HD' in mods.short_name() or 'FL' in mods.short_name():
-        special = True
+
+    special = 'HD' in mods.short_name() or 'FL' in mods.short_name()
+
 
     if grade == 'SS':
         return Grade.SSH if special else Grade.SS

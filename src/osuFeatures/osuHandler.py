@@ -58,7 +58,7 @@ async def createScoreEmbed(player: Player, score: ossapi.Score, beatmap: ossapi.
         mods = 'NM'
     embed = Embed(colour=16007990)
     beatmapset = beatmap.beatmapset()
-    embed.set_author(name=f'Score done by {player.username}', url=f'https://osu.ppy.sh/scores/osu/{score.best_id}')
+    embed.set_author(name=f'Score done by {player.username}', url=f'https://osu.ppy.sh/scores/{score.mode.value}/{score.best_id}')
     embed.title = f'{beatmapset.artist} - {beatmapset.title} [{beatmap.version}]'
     embed.url = f'https://osu.ppy.sh/beatmapsets/{beatmap.beatmapset_id}#osuFeatures/{beatmap.id}'
     embed.set_image(
@@ -150,7 +150,16 @@ class OsuHandler:
         self.__db.commit()
 
     async def prepareReplay(self, scoreId: int, description: str = '', shortenTitle: bool = False) -> bool:
-        score: ossapi.Score = await self.__osu.score(ossapi.GameMode.OSU, scoreId)
+        score = None
+
+        for mode in [ossapi.GameMode.OSU, ossapi.GameMode.MANIA, ossapi.GameMode.TAIKO, ossapi.GameMode.CATCH]:
+            try:
+                score: ossapi.Score = await self.__osu.score(mode, scoreId)
+            except ValueError:
+                continue
+
+        if score is None:
+            return None
         player = await self.__osu.user(score.user_id, mode=score.mode)
         beatmap = await self.__osu.beatmap(score.beatmap.id)
         replay = await createAll(self.__osu, player, score, beatmap, description, shortenTitle)

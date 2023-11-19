@@ -55,18 +55,23 @@ if __name__ == '__main__':
         await ctx.respond('replay is being prepared')
         await ctx.trigger_typing()
         files = []
-        if await osuHandler.prepareReplay(scoreid, description, shortentitle):
-            error = ''
-            files.append(discord.File(f'data/output/{scoreid}.osr'))
+        response = await osuHandler.prepareReplay(scoreid, description, shortentitle)
+
+        if response is None:
+            await channel.send('**Score does not exist!**')
         else:
-            error = f"**Score has no replay on the website**\n\n"
+            if await osuHandler.prepareReplay(scoreid, description, shortentitle):
+                error = ''
+                files.append(discord.File(f'data/output/{scoreid}.osr'))
+            else:
+                error = f"**Score has no replay on the website**\n\n"
 
-        files.append(discord.File(f'data/output/{scoreid}.jpg'))
-        description = open(f'data/output/{scoreid}Description', 'r').read()
-        title = open(f'data/output/{scoreid}Title', 'r').read().replace('#star#', '⭐')
+            files.append(discord.File(f'data/output/{scoreid}.jpg'))
+            description = open(f'data/output/{scoreid}Description', 'r').read()
+            title = open(f'data/output/{scoreid}Title', 'r').read().replace('#star#', '⭐')
 
-        await channel.send(f'{error}title:\n```{title}```\ndescription:\n```{description}```', files=files)
-        cleanup(scoreid)
+            await channel.send(f'{error}title:\n```{title}```\ndescription:\n```{description}```', files=files)
+            cleanup(scoreid)
 
     @bot.slash_command()
     async def preparereplayfromfile(ctx, file: discord.Attachment, description: str = '', shortentitle: bool = False):
