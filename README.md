@@ -55,5 +55,5 @@ sudo rm -rf Python-3.10.0*
 
 #### And lastly install dependencies for the program:
 ````
-pip -m pip install .
+pip install .
 ````
