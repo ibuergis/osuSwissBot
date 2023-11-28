@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from .emojis import Emojis
+from ..emojis import Emojis
 
 
 class FunCommands:

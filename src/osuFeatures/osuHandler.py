@@ -148,17 +148,15 @@ class OsuHandler:
 
         self.__db.commit()
 
-    async def prepareReplay(self, scoreId: int, description: str = '', shortenTitle: bool = False) -> bool:
-        score = None
-
-        for mode in [ossapi.GameMode.OSU, ossapi.GameMode.MANIA, ossapi.GameMode.TAIKO, ossapi.GameMode.CATCH]:
-            try:
-                score: ossapi.Score = await self.__osu.score(mode, scoreId)
-            except ValueError:
-                continue
-
-        if score is None:
+    async def prepareReplay(self, scoreId: int, description: str = '', shortenTitle: bool = False, gamemode: str = 'osu') -> bool | None:
+        gamemode = gamemode.lower()
+        gamemodes = {'osu': ossapi.GameMode.OSU, 'mania': ossapi.GameMode.MANIA, 'taiko': ossapi.GameMode.TAIKO, 'catch': ossapi.GameMode.CATCH}
+        mode = gamemodes[gamemode]
+        try:
+            score: ossapi.Score = await self.__osu.score(mode, scoreId)
+        except ValueError:
             return None
+
         player = await self.__osu.user(score.user_id, mode=score.mode)
         beatmap = await self.__osu.beatmap(score.beatmap.id)
         replay = await createAll(self.__osu, player, score, beatmap, description, shortenTitle)
@@ -170,7 +168,7 @@ class OsuHandler:
 
         return ossapiReplay
 
-    async def prepareReplayFromFile(self, ctx, file: File, description: str = '', shortenTitle: bool = False) -> ossapi.Score:
+    async def prepareReplayFromFile(self, ctx, file: File, description: str = '', shortenTitle: bool = False, gamemode: str = 'osu') -> ossapi.Score:
         await file.save(f'data/output/{ctx.author.id}.osr')
         file = open(f'data/output/{ctx.author.id}.osr', 'rb')
         replay = await self.convertReplayFile(file)

@@ -1,5 +1,5 @@
 from .botFeatures.automation import *
-from .botFeatures.funCommands import *
+from .botFeatures.commands import *
 from .botFeatures.emojis import *
 from .database.db import *
 from .entities.entity import *
