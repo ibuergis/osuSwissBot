@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy import create_engine, Engine, Connection, Sequence
+from sqlalchemy import create_engine, Engine, Connection
 from sqlalchemy import text
 
 import entities

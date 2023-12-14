@@ -17,13 +17,13 @@ class ReplayCommands(commands.Cog):
 
     @commands.slash_command(description="Render a thumbnail with the score ID")
     async def preparereplay(
-            self, 
+            self,
             ctx: discord.ApplicationContext,
             *,
-            scoreid: Option(int, description='add the id of the score'),
-            description: Option(str, description='a small text inside the thumbnail', default=''),
-            shortentitle: Option(bool, description='removes the featured artists in the title', default=False),
-            gamemode: Option(str, choices=['osu', 'mania', 'taiko', 'catch'], description='the gamemode to pick', default='osu'),
+            scoreid: Option(int, description='add the id of the score'), # noqa
+            description: Option(str, description='a small text inside the thumbnail', default=''), # noqa
+            shortentitle: Option(bool, description='removes the featured artists in the title', default=False), # noqa
+            gamemode: Option(str, choices=['osu', 'mania', 'taiko', 'catch'], description='the gamemode to pick', default='osu'), # noqa
     ):
         channel = self.bot.get_channel(ctx.channel_id)
         await ctx.respond('replay is being prepared')
@@ -38,7 +38,7 @@ class ReplayCommands(commands.Cog):
                 error = ''
                 files.append(discord.File(f'data/output/{scoreid}.osr'))
             else:
-                error = f"**Score has no replay on the website**\n\n"
+                error = "**Score has no replay on the website**\n\n"
 
             files.append(discord.File(f'data/output/{scoreid}.jpg'))
             description = open(f'data/output/{scoreid}Description', 'r').read()
@@ -52,9 +52,9 @@ class ReplayCommands(commands.Cog):
             self,
             ctx: discord.ApplicationContext,
             *,
-            replayfile: Option(discord.Attachment, description='add the replay file'),
-            description: Option(str, description='a small text inside the thumbnail', default=''),
-            shortentitle: Option(bool, description='removes the featured artists in the title', default=False),
+            replayfile: Option(discord.Attachment, description='add the replay file'), # noqa
+            description: Option(str, description='a small text inside the thumbnail', default=''), # noqa
+            shortentitle: Option(bool, description='removes the featured artists in the title', default=False), # noqa
     ):
         channel = self.bot.get_channel(ctx.channel_id)
         await ctx.respond('replay is being prepared')

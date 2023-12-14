@@ -4,7 +4,15 @@ from ossapi.enums import Grade
 import requests
 
 
-async def calculateScoreViaApi(mapId: int, *, s100: int = 0, s50: int = 0, miss: int = 0, mods: list = [], combo: int | None = None, rework: str = 'live') -> dict:
+async def calculateScoreViaApi(
+        mapId: int, *,
+        s100: int = 0,
+        s50: int = 0,
+        miss: int = 0,
+        mods: list = [],
+        combo: int | None = None,
+        rework: str = 'live'
+) -> dict:
     link = 'https://pp-api.huismetbenen.nl/calculate-score'
 
     request = {
@@ -38,11 +46,9 @@ async def gradeCalculator(n300: int = 0, n100: int = 0, n50: int = 0, miss: int 
 
     return 'D'
 
-
 async def gradeConverter(grade: str, mods: ossapi.Mod) -> Grade:
 
     special = 'HD' in mods.short_name() or 'FL' in mods.short_name()
-
 
     if grade == 'SS':
         return Grade.SSH if special else Grade.SS

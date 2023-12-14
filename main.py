@@ -36,7 +36,8 @@ if __name__ == '__main__':
         emojis = Emojis(bot)
         funCommands = FunCommands(bot, emojis)
         bot.mainChannel = bot.get_channel(int(config['scoresChannel']))
-        bot.add_cog(Automation(bot=bot, osuHandler=osuHandler, checkPlays=config['checkRecentPlays']))
+        automation = Automation(bot=bot, osuHandler=osuHandler, checkPlays=config['checkRecentPlays'])
+        bot.add_cog(automation)
         print(f'{bot.user.name} has connected to Discord!')
 
     @bot.event

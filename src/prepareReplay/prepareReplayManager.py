@@ -151,8 +151,9 @@ async def createTitle(osu: ossapi.OssapiAsync, user: User, score: Score, beatmap
     songTitle = await shortenSongTitle(beatmapset.title) if shortenTitle else beatmapset.title
     detailed: DifficultyAttributes = await osu.beatmap_attributes(beatmap.id, mods=score.mods)
     title = open(f'data/output/{score.best_id}Title', 'w+')
-    title.write(
-        f'{user.username} | {beatmapset.artist} - {songTitle}[{beatmap.version}] {round(detailed.attributes.star_rating, 2)}#star# +{score.mods.short_name()}')
+    songInfo = f"{beatmapset.artist} - {songTitle}"
+    mapInfo = f"[{beatmap.version}] {round(detailed.attributes.star_rating, 2)}#star# +{score.mods.short_name()}"
+    title.write(f'{user.username} | {songInfo}{mapInfo}')
     title.close()
 
 
