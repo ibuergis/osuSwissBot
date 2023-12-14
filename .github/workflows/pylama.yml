@@ -20,4 +20,4 @@ jobs:
         pip install pylama
     - name: Analysing the code with pylama
       run: |
-        pylama . -o $(git ls-file 'pyproject.toml')
+        pylama . -o $(git ls-files 'pyproject.toml')
