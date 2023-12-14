@@ -15,7 +15,8 @@ dependencies = [
     "py-cord",
     "pymysql",
     "osrparse",
-    "Pylama"
+    "Pylama",
+    "Pylama[toml]"
 ]
 
 [tool.pylama]
