@@ -1,7 +1,5 @@
 import ossapi
 import requests
-import re
-from urllib.request import urlretrieve
 
 class OsuDirect:
     __api: str = 'https://api.osu.direct'

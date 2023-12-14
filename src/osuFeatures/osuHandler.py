@@ -67,7 +67,11 @@ async def createScoreEmbed(player: Player, score: ossapi.Score, beatmap: ossapi.
     embed.add_field(name='Score:', value=f"{score.score:,}")
     embed.add_field(name='Accuracy:', value=f"{str(int(score.accuracy * 10000) / 100)}%")
     embed.add_field(name='Hits:',
-                    value=f"{score.statistics.count_300 or 0}/{score.statistics.count_100 or 0}/{score.statistics.count_50 or 0}/{score.statistics.count_miss or 0}")
+                    value=f"{score.statistics.count_300 or 0}/"
+                          f"{score.statistics.count_100 or 0}/"
+                          f"{score.statistics.count_50 or 0}/"
+                          f"{score.statistics.count_miss or 0}")
+
     embed.add_field(name='Combo:', value=f"{score.max_combo}x")
     embed.add_field(name='Mods:', value=mods)
     embed.add_field(name='PP:', value=score.pp)
@@ -148,9 +152,21 @@ class OsuHandler:
 
         self.__db.commit()
 
-    async def prepareReplay(self, scoreId: int, description: str = '', shortenTitle: bool = False, gamemode: str = 'osu') -> bool | None:
+    async def prepareReplay(
+            self,
+            scoreId: int,
+            description: str = '',
+            shortenTitle: bool = False,
+            gamemode: str = 'osu'
+    ) -> bool | None:
+
         gamemode = gamemode.lower()
-        gamemodes = {'osu': ossapi.GameMode.OSU, 'mania': ossapi.GameMode.MANIA, 'taiko': ossapi.GameMode.TAIKO, 'catch': ossapi.GameMode.CATCH}
+        gamemodes = {
+            'osu': ossapi.GameMode.OSU,
+            'mania': ossapi.GameMode.MANIA,
+            'taiko': ossapi.GameMode.TAIKO,
+            'catch': ossapi.GameMode.CATCH
+        }
         mode = gamemodes[gamemode]
         try:
             score: ossapi.Score = await self.__osu.score(mode, scoreId)
@@ -168,7 +184,14 @@ class OsuHandler:
 
         return ossapiReplay
 
-    async def prepareReplayFromFile(self, ctx, file: File, description: str = '', shortenTitle: bool = False, gamemode: str = 'osu') -> ossapi.Score:
+    async def prepareReplayFromFile(
+            self,
+            ctx,
+            file: File, description:
+            str = '', shortenTitle: bool = False,
+            gamemode: str = 'osu'
+    ) -> ossapi.Score:
+
         await file.save(f'data/output/{ctx.author.id}.osr')
         file = open(f'data/output/{ctx.author.id}.osr', 'rb')
         replay = await self.convertReplayFile(file)

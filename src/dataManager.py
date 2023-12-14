@@ -29,7 +29,7 @@ class DataManager:
         return data
 
     @staticmethod
-    def setJson(name: str= '', data: dict = {}) -> dict:
+    def setJson(name: str = '', data: dict = {}) -> dict:
         try:
             with open(os.getcwd() + '//data//' + name + '.json', 'w') as f:
                 json.dump(data, f, indent=4)
@@ -55,7 +55,3 @@ class DataManager:
             return {}
 
         return data
-
-
-
-

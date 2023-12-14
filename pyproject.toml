@@ -9,10 +9,22 @@ readme = "README.md"
 
 dependencies = [
     "pillow",
-    "discord",
+    "discord.py",
     "ossapi",
     "sqlalchemy",
     "py-cord",
     "pymysql",
     "osrparse",
+    "Pylama"
 ]
+
+[tool.pylama]
+format = "pylint"
+skip = "venv/*,build/*"
+
+[tool.pylama.linter.pycodestyle]
+max_line_length = 130
+ignore = "E302"
+
+[tool.pylama.linter.pyflakes]
+ignore = "E0602"
