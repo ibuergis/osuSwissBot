@@ -1,12 +1,12 @@
 CREATE TABLE `osuUser` (
-    `userId` INT UNSIGNED UNIQUE,
+    `id` INT UNSIGNED UNIQUE,
     `username` VARCHAR(100) NOT NULL,
-    `osuRank` INT NOT NULL,
-    `maniaRank` INT NOT NULL,
-    `taikoRank` INT NOT NULL,
-    `catchRank` INT NOT NULL,
+    `osuRank` INT,
+    `maniaRank` INT,
+    `taikoRank` INT,
+    `catchRank` INT,
     `country` VARCHAR(2) NOT NULL,
-    PRIMARY KEY (`userId`)
+    PRIMARY KEY (`id`)
 );
 
 DROP TABLE `player`;

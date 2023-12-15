@@ -7,10 +7,10 @@ from .base import Base
 class OsuUser(Base):
     __tablename__ = "osuUser"
 
-    userId: Mapped[int] = mapped_column(primary_key=True, autoincrement=False, unique=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=False, unique=True)
     username: Mapped[str] = mapped_column(String[100])
-    osuRank: Mapped[int]
-    maniaRank: Mapped[int]
-    taikoRank: Mapped[int]
-    catchRank: Mapped[int]
+    osuRank: Mapped[int] = mapped_column(nullable=True, default=None)
+    maniaRank: Mapped[int] = mapped_column(nullable=True, default=None)
+    taikoRank: Mapped[int] = mapped_column(nullable=True, default=None)
+    catchRank: Mapped[int] = mapped_column(nullable=True, default=None)
     country: Mapped[str] = mapped_column(String[2])

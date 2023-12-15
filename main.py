@@ -9,7 +9,7 @@ from src.osuFeatures.osuHandler import OsuHandler
 from src.botFeatures.automation import Automation
 from src.botFeatures.commands.funCommands import FunCommands
 from src.botFeatures.emojis import Emojis
-from src.database.db import DB
+from src.database.objectManager import ObjectManager
 
 if __name__ == '__main__':
     with open('config/config.json', 'r') as f:
@@ -19,9 +19,9 @@ if __name__ == '__main__':
     intents = discord.Intents.all()
     bot = commands.Bot(intents=intents, command_prefix='$')
 
-    db = DB(config)
+    om = ObjectManager(config)
 
-    osuHandler: OsuHandler = OsuHandler(db, config)
+    osuHandler: OsuHandler = OsuHandler(om, config)
 
     funCommands: FunCommands | None = None
     emojis = None

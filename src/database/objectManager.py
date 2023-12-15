@@ -13,8 +13,11 @@ class ObjectManager:
         self.__engine = create_engine(sqlalchemy_database_URL)
         self.orm = Session(self.__engine)
 
-    def get(self, object, id):
-        return self.orm.get(object, id)
+    def get(self, Class, id):
+        return self.orm.get(Class, id)
+
+    def getAll(self, Class):
+        return self.orm.execute(select(Class)).scalars()
 
     def select(self, Class):
         return select(Class)
