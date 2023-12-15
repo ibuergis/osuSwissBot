@@ -1,7 +1,3 @@
-CREATE DATABASE `osuSwiss`;
-
-USE `osuSwiss`;
-
 CREATE TABLE `player` (
     `id` INT UNSIGNED AUTO_INCREMENT,
     `userId` VARCHAR(100) UNIQUE,
@@ -11,4 +7,4 @@ CREATE TABLE `player` (
 )
 
 INSERT INTO `player` (`id`, `userId`, `username`, `rank`) VALUE
-(1, '1', '1', 1);
+(1, 1, '1', 1);

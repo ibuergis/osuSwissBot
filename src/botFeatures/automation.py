@@ -20,10 +20,12 @@ class Automation(commands.Cog):
 
     @tasks.loop(hours=23)
     async def updateUsers(self):
+        print('updating users...')
         await self.__osuHandler.updateUsers()
         print('users are updated')
 
     @tasks.loop(minutes=20)
     async def getScores(self):
+        print('updating plays...')
         await self.__osuHandler.getRecentPlays(self.__bot)
         print('finished updating plays')

@@ -1,6 +1,7 @@
 {
   "botToken": "",
   "DBServer": "",
+  "DBName": "",
   "DBUser": "",
   "DBPassword": "",
   "clientId": "",
