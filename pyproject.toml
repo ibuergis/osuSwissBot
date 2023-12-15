@@ -8,15 +8,18 @@ authors = [
 readme = "README.md"
 
 dependencies = [
-    "pillow",
-    "discord.py",
-    "ossapi",
-    "sqlalchemy",
-    "py-cord",
-    "pymysql",
-    "osrparse",
-    "Pylama",
-    "Pylama[toml]"
+    "pillow ~= 10.1",
+    "discord.py ~= 2.3",
+    "ossapi ~= 3.4",
+    "sqlalchemy ~= 2.0",
+    "py-cord ~= 2.4",
+    "pymysql ~= 1.1",
+    "osrparse ~= 6.0"
+]
+
+[project.optional-dependencies]
+tests = [
+    "Pylama[toml] ~= 8.4"
 ]
 
 [tool.pylama]

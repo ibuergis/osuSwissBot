@@ -14,25 +14,25 @@ import re as regex
 from .calculations import gradeCalculator, gradeConverter, calculateScoreViaApi
 
 from ..dataManager import DataManager
-from ..database.db import DB
-from ..entities.player import Player
+from ..database.objectManager import ObjectManager
+from ..database.entities.osuUser import OsuUser
 from ..prepareReplay.prepareReplayManager import createAll
 from ..botFeatures.buttons.thumbnail import Thumbnail
 
 from urllib.request import urlopen
 
 
-async def getUsersFromWebsite(pages: int, gamemode='osu') -> list[dict[str | int, Any]]:
-    players = []
+async def getUsersFromWebsite(pages: int, gamemode='osu', country='ch') -> list[dict[str | int, Any]]:
+    osuUsers = []
     for page in range(pages):
         page += 1
-        page = urlopen(f'https://osu.ppy.sh/rankings/{gamemode}/performance?country=CH&page={page}')
+        page = urlopen(f'https://osu.ppy.sh/rankings/{gamemode}/performance?country={country}&page={page}')
         html_bytes = page.read()
         html: str = ''.join(html_bytes.decode("utf-8").split('\n'))
         ''.join(html.split('\n'))
-        playerHtmls = regex.findall('<tr.*?</tr>', html)[1:]
-        for playerHtml in playerHtmls:
-            SingleTD = regex.findall('<td.*?</td>', playerHtml)[:2]
+        osuUsersHtml = regex.findall('<tr.*?</tr>', html)[1:]
+        for osuUserHtml in osuUsersHtml:
+            SingleTD = regex.findall('<td.*?</td>', osuUserHtml)[:2]
             rank = regex.findall('>.*?<', SingleTD[0])[0]
 
             id = regex.findall(f'https://osu.ppy.sh/users/.*?/{gamemode}', SingleTD[1])[0].replace(
@@ -40,30 +40,34 @@ async def getUsersFromWebsite(pages: int, gamemode='osu') -> list[dict[str | int
             linking = regex.findall('<a.*?</a>', SingleTD[1])[1]
             username = regex.findall('>.*?<', linking)[0]
 
-            player = {
+            osuUser = {
                 'rank': int(rank.replace('>', '').replace('<', '').strip().replace('#', '')),
-                'id': id,
+                'id': int(id),
                 'username': username.replace('>', '').replace('<', '').strip()
             }
 
-            players.append(player)
+            osuUsers.append(osuUser)
 
-    return players
+    return osuUsers
 
 
-async def createScoreEmbed(player: Player, score: ossapi.Score, beatmap: ossapi.Beatmap) -> Embed:
+async def createScoreEmbed(osuUser: OsuUser, score: ossapi.Score, beatmap: ossapi.Beatmap) -> Embed:
     mods = score.mods.short_name()
     if mods == '':
         mods = 'NM'
     embed = Embed(colour=16007990)
     beatmapset = beatmap.beatmapset()
-    embed.set_author(name=f'Score done by {player.username}', url=f'https://osu.ppy.sh/scores/{score.mode.value}/{score.best_id}')
+    embed.set_author(
+        name=f'Score done by {osuUser.username}',
+        url=f'https://osu.ppy.sh/scores/{score.mode.value}/{score.best_id}'
+
+    )
     embed.title = f'{beatmapset.artist} - {beatmapset.title} [{beatmap.version}]'
     embed.url = f'https://osu.ppy.sh/beatmapsets/{beatmap.beatmapset_id}#osuFeatures/{beatmap.id}'
     embed.set_image(
         url=f'https://assets.ppy.sh/beatmaps/{beatmap.beatmapset_id}/covers/cover.jpg?1650602952')
 
-    embed.set_thumbnail(url=f'https://a.ppy.sh/{player.userId}?1692642160')
+    embed.set_thumbnail(url=f'https://a.ppy.sh/{osuUser.id}?1692642160')
     embed.add_field(name='Score:', value=f"{score.score:,}")
     embed.add_field(name='Accuracy:', value=f"{str(int(score.accuracy * 10000) / 100)}%")
     embed.add_field(name='Hits:',
@@ -87,37 +91,37 @@ async def convertModsToList(mods: ossapi.Mod) -> list[str]:
 
 
 class OsuHandler:
-    __db: DB
+    __om: ObjectManager
 
     __osu: OssapiAsync
 
-    def __init__(self, db: DB, config: dict):
-        self.__db = db
+    def __init__(self, om: ObjectManager, config: dict):
+        self.__om = om
         self.__osu = OssapiAsync(int(config['clientId']),
                                  config['clientSecret'], 'http://localhost:3914/', ['public', 'identify'],
                                  grant="authorization")
 
     async def getUsersFromAPI(self, pages: int, gamemode: GameMode.OSU) -> list[ossapi.User]:
-        players = []
+        osuUsers = []
         for page in range(pages):
             page += 1
-            players.extend(await self.__osu.ranking(gamemode, RankingType.PERFORMANCE, country='ch',
-                                                    cursor={'page': page}).rankings)
-        return players
+            osuUsers.extend(await self.__osu.ranking(gamemode, RankingType.PERFORMANCE, country='ch',
+                                                     cursor={'page': page}).rankings)
+        return osuUsers
 
-    async def processRecentPlayerScores(self, bot: commands.Bot, user: Player, mode: GameMode.OSU):
-        scores = await self.__osu.user_scores(user.userId, ScoreType.RECENT, include_fails=False, limit=20, mode=mode)
+    async def processRecentUserScores(self, bot: commands.Bot, osuUser: OsuUser, mode: GameMode.OSU):
+        scores = await self.__osu.user_scores(osuUser.id, ScoreType.RECENT, include_fails=False, limit=20, mode=mode)
         jsonScores = DataManager.getOrCreateJson('lastScores')
         tempScores = []
         for score in scores:
             score: ossapi.Score
             tempScores.append(score.id)
-            if str(user.userId) not in jsonScores.keys():
-                jsonScores[str(user.userId)] = []
+            if str(osuUser.id) not in jsonScores.keys():
+                jsonScores[str(osuUser.id)] = []
 
-            if score.replay is True and score.id is not None and score.id not in jsonScores[str(user.userId)]:
+            if score.replay is True and score.id is not None and score.id not in jsonScores[str(osuUser.id)]:
                 beatmap = await self.__osu.beatmap(score.beatmap.id)
-                topPlays = await self.__osu.user_scores(user.userId, ScoreType.BEST, include_fails=False, limit=20,
+                topPlays = await self.__osu.user_scores(osuUser.id, ScoreType.BEST, include_fails=False, limit=20,
                                                         mode=mode)
 
                 message = ''
@@ -126,31 +130,38 @@ class OsuHandler:
                         message = '@everyone this is a new top play'
                     elif score.pp == topPlays[0].pp and int(score.pp // 100) == int(topPlays[1].pp):
                         message = f'@everyone this person broke the {int(score.pp / 100) * 100}pp barrier'
-                    await bot.mainChannel.send(message, embed=await createScoreEmbed(user, score, beatmap),
-                                               view=Thumbnail(self.__osu, bot, user.userId, score, beatmap))
+                    await bot.mainChannel.send(message, embed=await createScoreEmbed(osuUser, score, beatmap),
+                                               view=Thumbnail(self.__osu, bot, osuUser.id, score, beatmap))
 
-        jsonScores[str(user.userId)] = tempScores
+        jsonScores[str(osuUser.id)] = tempScores
         DataManager.setJson('lastScores', jsonScores)
 
     async def getRecentPlays(self, bot: commands.Bot, mode: str = ossapi.GameMode.OSU):
-        players: list[Player] = self.__db.getObjects('player')
-        for player in players:
-            await self.processRecentPlayerScores(bot, player, mode)
+        osuUsers: list[OsuUser] = self.__om.getAll(OsuUser)
+        for osuUser in osuUsers:
+            await self.processRecentUserScores(bot, osuUser, mode)
 
     async def updateUsers(self):
-        players = self.__db.getObjects('player')
-        if players != []:
-            self.__db.deleteObjects(players)
+        print(OsuUser.id)
 
-        players = await getUsersFromWebsite(2)
+        osuUsers = await getUsersFromWebsite(2, 'osu', 'ch')
 
-        playerList = []
-        for player in players:
-            playerList.append(Player([None, player['id'], player['username'], player['rank']]))
+        for osuUserData in osuUsers:
+            osuUser: OsuUser = self.__om.get(OsuUser, osuUserData['id'])
 
-        self.__db.addObjects(playerList)
+            if osuUser is None:
+                osuUser = OsuUser(
+                    id=osuUserData['id'],
+                    username=osuUserData['username'],
+                    osuRank=osuUserData['rank'],
+                    country='ch'
+                )
+                self.__om.add(osuUser)
+            else:
+                osuUser.username = osuUserData['username']
+                osuUser.osuRank = osuUserData['rank']
 
-        self.__db.commit()
+        self.__om.flush()
 
     async def prepareReplay(
             self,
@@ -173,9 +184,9 @@ class OsuHandler:
         except ValueError:
             return None
 
-        player = await self.__osu.user(score.user_id, mode=score.mode)
+        osuUser = await self.__osu.user(score.user_id, mode=score.mode)
         beatmap = await self.__osu.beatmap(score.beatmap.id)
-        replay = await createAll(self.__osu, player, score, beatmap, description, shortenTitle)
+        replay = await createAll(self.__osu, osuUser, score, beatmap, description, shortenTitle)
         return replay
 
     async def convertReplayFile(self, file: File) -> Replay:

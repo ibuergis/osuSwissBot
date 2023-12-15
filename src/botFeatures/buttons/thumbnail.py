@@ -9,7 +9,7 @@ class Thumbnail(discord.ui.View):
 
     bot: discord.Bot
 
-    player: ossapi.User
+    userId: int
 
     score: ossapi.Score
 
@@ -19,13 +19,13 @@ class Thumbnail(discord.ui.View):
             self,
             osu: ossapi.OssapiAsync,
             bot: commands.Bot,
-            user: ossapi.User,
+            userId: int,
             score: ossapi.Score, beatmap: ossapi.Beatmap
     ):
         super().__init__(timeout=1800)
         self.osu = osu
         self.bot = bot
-        self.player = user
+        self.userId = userId
         self.score = score
         self.beatmap = beatmap
 
@@ -34,7 +34,7 @@ class Thumbnail(discord.ui.View):
         error = ''
         hasReplay: bool = await createAll(
             self.osu,
-            await self.osu.user(self.player, mode=self.score.mode),
+            await self.osu.user(self.userId, mode=self.score.mode),
             self.score,
             self.beatmap
         )
