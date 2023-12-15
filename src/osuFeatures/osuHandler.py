@@ -57,7 +57,11 @@ async def createScoreEmbed(osuUser: OsuUser, score: ossapi.Score, beatmap: ossap
         mods = 'NM'
     embed = Embed(colour=16007990)
     beatmapset = beatmap.beatmapset()
-    embed.set_author(name=f'Score done by {osuUser.username}', url=f'https://osu.ppy.sh/scores/{score.mode.value}/{score.best_id}')
+    embed.set_author(
+        name=f'Score done by {osuUser.username}',
+        url=f'https://osu.ppy.sh/scores/{score.mode.value}/{score.best_id}'
+
+    )
     embed.title = f'{beatmapset.artist} - {beatmapset.title} [{beatmap.version}]'
     embed.url = f'https://osu.ppy.sh/beatmapsets/{beatmap.beatmapset_id}#osuFeatures/{beatmap.id}'
     embed.set_image(
@@ -102,7 +106,7 @@ class OsuHandler:
         for page in range(pages):
             page += 1
             osuUsers.extend(await self.__osu.ranking(gamemode, RankingType.PERFORMANCE, country='ch',
-                                                    cursor={'page': page}).rankings)
+                                                     cursor={'page': page}).rankings)
         return osuUsers
 
     async def processRecentUserScores(self, bot: commands.Bot, osuUser: OsuUser, mode: GameMode.OSU):
@@ -146,7 +150,12 @@ class OsuHandler:
             osuUser: OsuUser = self.__om.get(OsuUser, osuUserData['id'])
 
             if osuUser is None:
-                osuUser = OsuUser(id=osuUserData['id'], username=osuUserData['username'], osuRank=osuUserData['rank'], country='ch')
+                osuUser = OsuUser(
+                    id=osuUserData['id'],
+                    username=osuUserData['username'],
+                    osuRank=osuUserData['rank'],
+                    country='ch'
+                )
                 self.__om.add(osuUser)
             else:
                 osuUser.username = osuUserData['username']
