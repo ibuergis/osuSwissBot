@@ -1,5 +1,6 @@
 from sqlalchemy import Engine, create_engine, select
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import NoResultFound
 
 
 class ObjectManager:
@@ -23,7 +24,7 @@ class ObjectManager:
         else:
             try:
                 return self.orm.execute(selectBy).scalar_one()
-            except ValueError:
+            except NoResultFound:
                 return None
 
     def getBy(self, Class, column, value):
