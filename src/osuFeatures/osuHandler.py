@@ -22,7 +22,7 @@ from ..botFeatures.buttons.thumbnail import Thumbnail
 from urllib.request import urlopen
 
 
-async def getUsersFromWebsite(pages: int, gameMode = GameMode.OSU, country='ch') -> list[dict[str | int, Any]]:
+async def getUsersFromWebsite(pages: int, gameMode=GameMode.OSU, country='ch') -> list[dict[str | int, Any]]:
     osuUsers = []
     for page in range(pages):
         page += 1
@@ -136,7 +136,8 @@ class OsuHandler:
         jsonScores[str(osuUser.id)] = tempScores
         DataManager.setJson('lastScores', jsonScores)
 
-    async def getRecentPlays(self, bot: commands.Bot, mode: ossapi.GameMode = ossapi.GameMode.OSU, ranks: list[int] | None=None):
+    async def getRecentPlays(self, bot: commands.Bot, mode: ossapi.GameMode = ossapi.GameMode.OSU,
+                             ranks: list[int] | None = None):
         match mode:
             case ossapi.GameMode.OSU:
                 osuUserFilter = OsuUser.osuRank
@@ -158,7 +159,7 @@ class OsuHandler:
         osuUsers: list[OsuUser] = self.__om.execute(select).scalars()
 
         for osuUser in osuUsers:
-             await self.processRecentUserScores(bot, osuUser, mode)
+            await self.processRecentUserScores(bot, osuUser, mode)
 
     async def updateUsers(self):
         osuUsers = await getUsersFromWebsite(2, GameMode.OSU, 'ch')
