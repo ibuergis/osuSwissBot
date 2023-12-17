@@ -3,6 +3,8 @@ import json
 import discord
 from discord.ext import commands
 
+from src.botFeatures.commands.adminCommands.guildCommands import GuildCommands
+from src.botFeatures.commands.adminCommands.mentionCommands import MentionCommands
 from src.botFeatures.commands.miscCommands import MiscCommands
 from src.botFeatures.commands.replayCommands import ReplayCommands
 from src.osuFeatures.osuHandler import OsuHandler
@@ -10,6 +12,7 @@ from src.botFeatures.automation import Automation
 from src.botFeatures.commands.funCommands import FunCommands
 from src.botFeatures.emojis import Emojis
 from src.database.objectManager import ObjectManager
+from src.database.entities.guild import Guild
 
 if __name__ == '__main__':
     with open('config/config.json', 'r') as f:
@@ -28,6 +31,8 @@ if __name__ == '__main__':
 
     bot.add_cog(ReplayCommands(bot, osuHandler))
     bot.add_cog(MiscCommands(bot))
+    bot.add_cog(GuildCommands(bot, om))
+    bot.add_cog(MentionCommands(bot, om))
 
     @bot.event
     async def on_ready():
@@ -35,10 +40,24 @@ if __name__ == '__main__':
         global emojis
         emojis = Emojis(bot)
         funCommands = FunCommands(bot, emojis)
-        bot.mainChannel = bot.get_channel(int(config['scoresChannel']))
         automation = Automation(bot=bot, osuHandler=osuHandler, checkPlays=config['checkRecentPlays'])
         bot.add_cog(automation)
         print(f'{bot.user.name} has connected to Discord!')
+
+    @bot.event
+    async def on_guild_join(guild: discord.Guild):
+        print('joined guild ' + str(guild.id))
+        guild = Guild(guildId=str(guild.id))
+        om.add(guild)
+        om.flush()
+
+    @bot.event
+    async def on_guild_remove(guild: discord.Guild):
+        print('left guild ' + str(guild.id))
+        guild: Guild = om.getOneBy(Guild, Guild.guildId, str(guild.id), throw=False)
+        if guild is not None:
+            om.delete(guild)
+            om.flush()
 
     @bot.event
     async def on_message(ctx: discord.Message):

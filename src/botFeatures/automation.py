@@ -21,7 +21,7 @@ class Automation(commands.Cog):
         else:
             print('Recent scores are not getting checked')
 
-    @tasks.loop(hours=23)
+    @tasks.loop(hours=12)
     async def updateUsers(self):
         print('updating users...')
         await self.__osuHandler.updateUsers()
