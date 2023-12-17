@@ -22,11 +22,11 @@ from ..botFeatures.buttons.thumbnail import Thumbnail
 from urllib.request import urlopen
 
 
-async def getUsersFromWebsite(pages: int, gamemode='osu', country='ch') -> list[dict[str | int, Any]]:
+async def getUsersFromWebsite(pages: int, gameMode=GameMode.OSU, country='ch') -> list[dict[str | int, Any]]:
     osuUsers = []
     for page in range(pages):
         page += 1
-        page = urlopen(f'https://osu.ppy.sh/rankings/{gamemode}/performance?country={country}&page={page}')
+        page = urlopen(f'https://osu.ppy.sh/rankings/{gameMode}/performance?country={country}&page={page}')
         html_bytes = page.read()
         html: str = ''.join(html_bytes.decode("utf-8").split('\n'))
         ''.join(html.split('\n'))
@@ -35,8 +35,8 @@ async def getUsersFromWebsite(pages: int, gamemode='osu', country='ch') -> list[
             SingleTD = regex.findall('<td.*?</td>', osuUserHtml)[:2]
             rank = regex.findall('>.*?<', SingleTD[0])[0]
 
-            id = regex.findall(f'https://osu.ppy.sh/users/.*?/{gamemode}', SingleTD[1])[0].replace(
-                'https://osu.ppy.sh/users/', '').replace(f'/{gamemode}', '')
+            id = regex.findall(f'https://osu.ppy.sh/users/.*?/{gameMode}', SingleTD[1])[0].replace(
+                'https://osu.ppy.sh/users/', '').replace(f'/{gameMode}', '')
             linking = regex.findall('<a.*?</a>', SingleTD[1])[1]
             username = regex.findall('>.*?<', linking)[0]
 
@@ -136,15 +136,33 @@ class OsuHandler:
         jsonScores[str(osuUser.id)] = tempScores
         DataManager.setJson('lastScores', jsonScores)
 
-    async def getRecentPlays(self, bot: commands.Bot, mode: str = ossapi.GameMode.OSU):
-        osuUsers: list[OsuUser] = self.__om.getAll(OsuUser)
+    async def getRecentPlays(self, bot: commands.Bot, mode: ossapi.GameMode = ossapi.GameMode.OSU,
+                             ranks: list[int] | None = None):
+        match mode:
+            case ossapi.GameMode.OSU:
+                osuUserFilter = OsuUser.osuRank
+            case ossapi.GameMode.MANIA:
+                osuUserFilter = OsuUser.maniaRank
+            case ossapi.GameMode.TAIKO:
+                osuUserFilter = OsuUser.taikoRank
+            case ossapi.GameMode.CATCH:
+                osuUserFilter = OsuUser.catchRank
+            case _:
+                raise Exception('Define a valid gamemode')
+
+        select = self.__om.select(OsuUser)
+        if ranks is None:
+            select = select.where(osuUserFilter is not None)
+        else:
+            select = select.where(osuUserFilter.in_(tuple(ranks)))
+
+        osuUsers: list[OsuUser] = self.__om.execute(select).scalars()
+
         for osuUser in osuUsers:
             await self.processRecentUserScores(bot, osuUser, mode)
 
     async def updateUsers(self):
-        print(OsuUser.id)
-
-        osuUsers = await getUsersFromWebsite(2, 'osu', 'ch')
+        osuUsers = await getUsersFromWebsite(2, GameMode.OSU, 'ch')
 
         for osuUserData in osuUsers:
             osuUser: OsuUser = self.__om.get(OsuUser, osuUserData['id'])
