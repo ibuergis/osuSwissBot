@@ -14,6 +14,7 @@ import re as regex
 from .calculations import gradeCalculator, gradeConverter, calculateScoreViaApi
 
 from ..dataManager import DataManager
+from ..database.entities.guild import Guild
 from ..database.objectManager import ObjectManager
 from ..database.entities.osuUser import OsuUser
 from ..prepareReplay.prepareReplayManager import createAll
@@ -124,14 +125,27 @@ class OsuHandler:
                 topPlays = await self.__osu.user_scores(osuUser.id, ScoreType.BEST, include_fails=False, limit=20,
                                                         mode=mode)
 
-                message = ''
-                if score.pp is not None:
-                    if score.pp == topPlays[0].pp:
-                        message = '@everyone this is a new top play'
-                    elif score.pp == topPlays[0].pp and int(score.pp // 100) == int(topPlays[1].pp):
-                        message = f'@everyone this person broke the {int(score.pp / 100) * 100}pp barrier'
-                    await bot.mainChannel.send(message, embed=await createScoreEmbed(osuUser, score, beatmap),
-                                               view=Thumbnail(self.__osu, bot, osuUser.id, score, beatmap))
+                guilds: list[Guild] = self.__om.getAll(Guild)
+                for guild in guilds:
+
+                    mentions = []
+                    for discordUser in guild.osuMentionOnTopPlay:
+                        user = bot.get_user(discordUser.userId)
+                        mentions.append(user.mention)
+
+                    message = ''
+                    if score.pp is not None:
+                        if score.pp == topPlays[0].pp:
+                            message = f'{" ".join(mentions)} this is a new top play'
+                        elif score.pp == topPlays[0].pp and int(score.pp // 100) == int(topPlays[1].pp):
+                            message = f'{" ".join(mentions)} this person broke the {int(score.pp / 100) * 100}pp barrier'
+
+                    if guild.osuScoresChannel is not None:
+                        await bot.get_channel(int(guild.osuScoresChannel)).send(
+                            message,
+                            embed=await createScoreEmbed(osuUser, score, beatmap),
+                            view=Thumbnail(self.__osu, bot, osuUser.id, score, beatmap)
+                        )
 
         jsonScores[str(osuUser.id)] = tempScores
         DataManager.setJson('lastScores', jsonScores)

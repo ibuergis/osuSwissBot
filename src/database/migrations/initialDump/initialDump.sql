@@ -4,7 +4,7 @@ CREATE TABLE `player` (
     `username` VARCHAR(100),
     `rank` INT,
     PRIMARY KEY (`id`)
-)
+);
 
 INSERT INTO `player` (`id`, `userId`, `username`, `rank`) VALUE
 (1, 1, '1', 1);
