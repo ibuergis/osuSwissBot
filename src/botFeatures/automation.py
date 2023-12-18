@@ -36,7 +36,7 @@ class Automation(commands.Cog):
         rankRange = [self.__getScoresLoop, self.__getScoresLoop + 1]
         strRankRange = [str(self.__getScoresLoop), str(self.__getScoresLoop + 1)]
         print('updating players: ' + ", ".join(strRankRange))
-        self.__getScoresLoop = self.__getScoresLoop + 2 % 20
+        self.__getScoresLoop = (self.__getScoresLoop + 2) % 50
 
         await self.__osuHandler.getRecentPlays(self.__bot, GameMode.OSU, rankRange)
 
