@@ -29,8 +29,9 @@ class Automation(commands.Cog):
 
     @tasks.loop(minutes=2)
     async def getScores(self):
-        print('updating plays...')
         rankRange = [self.__getScoresLoop, self.__getScoresLoop + 1]
+        strRankRange = [str(self.__getScoresLoop), str(self.__getScoresLoop + 1)]
+        print('updating players: ' + ", ".join(strRankRange))
         self.__getScoresLoop = self.__getScoresLoop + 2 % 20
 
         await self.__osuHandler.getRecentPlays(self.__bot, GameMode.OSU, rankRange)
