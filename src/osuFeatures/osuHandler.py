@@ -130,7 +130,7 @@ class OsuHandler:
 
                     mentions = []
                     for discordUser in guild.osuMentionOnTopPlay:
-                        user = bot.get_user(discordUser.userId)
+                        user = bot.get_user(int(discordUser.userId))
                         mentions.append(user.mention)
 
                     message = ''
