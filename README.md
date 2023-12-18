@@ -2,58 +2,65 @@
 ***
 Here I will explain everything needed for the bot
 
-## Upload files
-***
-Run this command in Windows
+## How to run
+first clone the repository with:
+```
+git clone https://github.com/ibuergis/osuSwissBot.git
+```
 
-````
-scp -i pathToKey -r pathToProject ec2-user@server:
-````
-## Connect to instance
-***
-In Terminal
-````
-ssh -i pathToKey ec2-user@server
-````
+In the config folder there is config.sample.json. clone it and remove ".sample"
 
-## How to run the program
-***
-use this command in the  instance
-````
-python3.10 main.py
-````
-
-## Setup instance
-***
-We are using Amazon Linux with a space of 30Gbit
-
-#### First connect to the instance:
-````
-ssh -i pathToKey ec2-user@server
-````
-#### Then install python3.10:
-````
-sudo yum install -y xz-devel
-sudo yum install -y lzma
-sudo yum install -y zlib-devel
-sudo yum install -y gcc openssl-devel bzip2-devel libffi-devel
-sudo yum install -y make
-sudo yum install -y elinks
-
-wget https://www.python.org/ftp/python/3.10.0/Python-3.10.0.tgz
-
-tar xzf Python-3.10.0.tgz
-cd Python-3.10.0  # Change to the Python source directory
-./configure --enable-optimizations
-make
-sudo make install
-
-cd ..
-sudo rm -rf Python-3.10.0*
-
+next Add in the values accordingly:
+````json
+{
+  "botToken": "<The token from the bot youre using",
+  "DBServer": "<The link to the database server>",
+  "DBName": "<The name of the database>",
+  "DBUser": "<The username for the database>",
+  "DBPassword": "<The password for the database>",
+  "clientId": "<The client ID you that you can get from osu!>",
+  "clientSecret": "<The client secret connected to the client ID>",
+  "checkRecentPlays": "<true or false | useful for testing>"
+}
 ````
 
-#### And lastly install dependencies for the program:
-````
-pip install .
-````
+### To get the client ID and secret.
+go to your osu! user and click on settings. Scroll down until you find oAuth.
+Then click on this.
+
+![img.png](.github/readmeFiles/newoauthappication.png)
+
+After that you can name your client after whatever you want.
+The callback url though is currently hard-coded and its this:
+```
+http://localhost:3914/
+```
+
+![img.png](.github/readmeFiles/clientDataPutInSmthIdk.png)
+
+After you registered you can see the clientId and the client secret.
+
+![img.png](.github/readmeFiles/clientIdAndSecret.png)
+
+
+### Install dependencies
+
+Go to the folder where the project is in and open terminal.
+
+If you just want to run it use:
+```
+    pip install osuSwissBot
+```
+
+If you want to help with development I recommend using this instead:
+
+```
+pip install osuSwissBot[test]
+```
+
+This will also install pylama so that you can use the coding standard.
+
+Lastly you can run it with:
+```
+    python main.py
+```
