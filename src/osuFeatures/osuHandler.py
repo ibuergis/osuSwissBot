@@ -108,8 +108,7 @@ class OsuHandler:
         osuUsers = []
         for page in range(pages):
             page += 1
-            result = await self.__osu.ranking(gamemode, RankingType.PERFORMANCE, country=country,
-                                                     cursor={'page': page})
+            result = await self.__osu.ranking(gamemode, RankingType.PERFORMANCE, country=country, cursor={'page': page})
             osuUsers.extend(result.ranking)
         return osuUsers
 
