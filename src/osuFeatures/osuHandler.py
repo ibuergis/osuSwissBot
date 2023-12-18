@@ -181,20 +181,21 @@ class OsuHandler:
     async def updateUsers(self):
         usersFromApi: list[UserStatistics] = await self.getUsersFromAPI(2, GameMode.OSU, 'ch')
 
+        currentRank = 0
         for userFromApi in usersFromApi:
             osuUser: OsuUser = self.__om.get(OsuUser, userFromApi.user.id)
-
+            currentRank += 1
             if osuUser is None:
                 osuUser = OsuUser(
                     id=userFromApi.user.id,
                     username=userFromApi.user.username,
-                    osuRank=userFromApi.rank,
+                    osuRank=currentRank,
                     country='ch'
                 )
                 self.__om.add(osuUser)
             else:
                 osuUser.username = userFromApi.user.username
-                osuUser.osuRank = userFromApi.rank
+                osuUser.osuRank = currentRank
 
         self.__om.flush()
 
