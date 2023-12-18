@@ -1,7 +1,6 @@
 import json
 
 import discord
-from discord import RawMemberRemoveEvent
 from discord.ext import commands
 
 from src.botFeatures.commands.adminCommands.guildCommands import GuildCommands
@@ -36,50 +35,49 @@ if __name__ == '__main__':
     bot.add_cog(GuildCommands(bot, om))
     bot.add_cog(MentionCommands(bot, om))
 
-    @bot.event
-    async def on_ready():
-        global funCommands
-        global emojis
-        emojis = Emojis(bot)
-        funCommands = FunCommands(bot, emojis)
-        automation = Automation(bot=bot, osuHandler=osuHandler, checkPlays=config['checkRecentPlays'])
-        bot.add_cog(automation)
-        print(f'{bot.user.name} has connected to Discord!')
+@bot.event
+async def on_ready():
+    global funCommands
+    global emojis
+    emojis = Emojis(bot)
+    funCommands = FunCommands(bot, emojis)
+    automation = Automation(bot=bot, osuHandler=osuHandler, checkPlays=config['checkRecentPlays'])
+    bot.add_cog(automation)
+    print(f'{bot.user.name} has connected to Discord!')
 
-    @bot.event
-    async def on_guild_join(guild: discord.Guild):
-        print('joined guild ' + str(guild.id))
-        guild = Guild(guildId=str(guild.id))
+@bot.event
+async def on_guild_join(guild: discord.Guild):
+    print('joined guild ' + str(guild.id))
+    guild = Guild(guildId=str(guild.id))
+    om.add(guild)
+    om.flush()
+
+@bot.event
+async def on_guild_remove(guild: discord.Guild):
+    print('left guild ' + str(guild.id))
+    guild: Guild = om.getOneBy(Guild, Guild.guildId, str(guild.id), throw=False)
+    if guild is not None:
+        om.delete(guild)
+        om.flush()
+
+@bot.event
+async def on_member_remove(member: discord.Member):
+    discordUser = om.getOneBy(DiscordUser, DiscordUser.userId, str(member.id))
+    guild = om.getOneBy(Guild, Guild.guildId, str(member.guild.id))
+    if guild is None:
+        guild = Guild(guildId=str(member.guild.id))
         om.add(guild)
-        om.flush()
+    if discordUser is not None:
+        guild.osuMentionOnTopPlay.remove(discordUser)
+        guild.maniaMentionOnTopPlay.remove(discordUser)
+        guild.taikoMentionOnTopPlay.remove(discordUser)
+        guild.catchMentionOnTopPlay.remove(discordUser)
 
-    @bot.event
-    async def on_guild_remove(guild: discord.Guild):
-        print('left guild ' + str(guild.id))
-        guild: Guild = om.getOneBy(Guild, Guild.guildId, str(guild.id), throw=False)
-        if guild is not None:
-            om.delete(guild)
-            om.flush()
+    om.flush()
 
-    @bot.event
-    async def on_member_remove(member: discord.Member):
-        discordUser = om.getOneBy(DiscordUser, DiscordUser.userId, str(member.id))
-        guild = om.getOneBy(Guild, Guild.guildId, str(member.guild.id))
-        if guild is None:
-            guild = Guild(guildId=str(member.guild.id))
-            om.add(guild)
-        if discordUser is not None:
-            guild.osuMentionOnTopPlay.remove(discordUser)
-            guild.maniaMentionOnTopPlay.remove(discordUser)
-            guild.taikoMentionOnTopPlay.remove(discordUser)
-            guild.catchMentionOnTopPlay.remove(discordUser)
+@bot.event
+async def on_message(ctx: discord.Message):
+    if funCommands is not None:
+        await funCommands.checkForEasterEgg(ctx, ctx.content)
 
-        om.flush()
-
-
-    @bot.event
-    async def on_message(ctx: discord.Message):
-        if funCommands is not None:
-            await funCommands.checkForEasterEgg(ctx, ctx.content)
-
-    bot.run(config['botToken'])
+bot.run(config['botToken'])
