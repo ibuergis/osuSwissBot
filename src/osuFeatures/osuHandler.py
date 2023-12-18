@@ -11,6 +11,8 @@ from ossapi import OssapiAsync, GameMode, RankingType, ScoreType, Replay
 import os
 import re as regex
 
+from ossapi.models import UserStatistics
+
 from .calculations import gradeCalculator, gradeConverter, calculateScoreViaApi
 
 from ..dataManager import DataManager
@@ -102,12 +104,13 @@ class OsuHandler:
                                  config['clientSecret'], 'http://localhost:3914/', ['public', 'identify'],
                                  grant="authorization")
 
-    async def getUsersFromAPI(self, pages: int, gamemode: GameMode.OSU) -> list[ossapi.User]:
+    async def getUsersFromAPI(self, pages: int, gamemode: GameMode.OSU, country: str = 'ch') -> list[UserStatistics]:
         osuUsers = []
         for page in range(pages):
             page += 1
-            osuUsers.extend(await self.__osu.ranking(gamemode, RankingType.PERFORMANCE, country='ch',
-                                                     cursor={'page': page}).rankings)
+            result = await self.__osu.ranking(gamemode, RankingType.PERFORMANCE, country=country,
+                                                     cursor={'page': page})
+            osuUsers.extend(result.ranking)
         return osuUsers
 
     async def processRecentUserScores(self, bot: commands.Bot, osuUser: OsuUser, mode: GameMode.OSU):
@@ -176,22 +179,22 @@ class OsuHandler:
             await self.processRecentUserScores(bot, osuUser, mode)
 
     async def updateUsers(self):
-        osuUsers = await getUsersFromWebsite(2, GameMode.OSU, 'ch')
+        usersFromApi: list[UserStatistics] = await self.getUsersFromAPI(2, GameMode.OSU, 'ch')
 
-        for osuUserData in osuUsers:
-            osuUser: OsuUser = self.__om.get(OsuUser, osuUserData['id'])
+        for userFromApi in usersFromApi:
+            osuUser: OsuUser = self.__om.get(OsuUser, userFromApi.user.id)
 
             if osuUser is None:
                 osuUser = OsuUser(
-                    id=osuUserData['id'],
-                    username=osuUserData['username'],
-                    osuRank=osuUserData['rank'],
+                    id=userFromApi.user.id,
+                    username=userFromApi.user.username,
+                    osuRank=userFromApi.rank,
                     country='ch'
                 )
                 self.__om.add(osuUser)
             else:
-                osuUser.username = osuUserData['username']
-                osuUser.osuRank = osuUserData['rank']
+                osuUser.username = userFromApi.user.username
+                osuUser.osuRank = userFromApi.rank
 
         self.__om.flush()
 
