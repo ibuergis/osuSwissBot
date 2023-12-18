@@ -1,5 +1,3 @@
-import time
-
 from discord.ext import tasks, commands
 from src.osuFeatures.osuHandler import OsuHandler
 from ossapi import GameMode
