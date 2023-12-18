@@ -8,7 +8,7 @@ class Automation(commands.Cog):
 
     __osuHandler: OsuHandler
 
-    __getScoresLoop = 1
+    __getScoresLoop: int = 1
 
     def __init__(self, bot: commands.Bot, osuHandler: OsuHandler, checkPlays: bool = True):
         self.__bot = bot
