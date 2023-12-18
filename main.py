@@ -15,6 +15,8 @@ from src.botFeatures.emojis import Emojis
 from src.database.objectManager import ObjectManager
 from src.database.entities.guild import Guild
 
+loaded = False
+
 if __name__ == '__main__':
     with open('config/config.json', 'r') as f:
         config: dict = json.load(f)
@@ -39,10 +41,14 @@ if __name__ == '__main__':
 async def on_ready():
     global funCommands
     global emojis
-    emojis = Emojis(bot)
-    funCommands = FunCommands(bot, emojis)
-    automation = Automation(bot=bot, osuHandler=osuHandler, checkPlays=config['checkRecentPlays'])
-    bot.add_cog(automation)
+    global loaded
+
+    if not loaded:
+        emojis = Emojis(bot)
+        funCommands = FunCommands(bot, emojis)
+        automation = Automation(bot=bot, osuHandler=osuHandler, checkPlays=config['checkRecentPlays'])
+        bot.add_cog(automation)
+        loaded = True
     print(f'{bot.user.name} has connected to Discord!')
 
 @bot.event
