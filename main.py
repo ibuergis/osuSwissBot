@@ -1,12 +1,14 @@
 import json
 
 import discord
+from discord import RawMemberRemoveEvent
 from discord.ext import commands
 
 from src.botFeatures.commands.adminCommands.guildCommands import GuildCommands
 from src.botFeatures.commands.adminCommands.mentionCommands import MentionCommands
 from src.botFeatures.commands.miscCommands import MiscCommands
 from src.botFeatures.commands.replayCommands import ReplayCommands
+from src.database.entities.discordUser import DiscordUser
 from src.osuFeatures.osuHandler import OsuHandler
 from src.botFeatures.automation import Automation
 from src.botFeatures.commands.funCommands import FunCommands
@@ -58,6 +60,22 @@ if __name__ == '__main__':
         if guild is not None:
             om.delete(guild)
             om.flush()
+
+    @bot.event
+    async def on_member_remove(member: discord.Member):
+        discordUser = om.getOneBy(DiscordUser, DiscordUser.userId, str(member.id))
+        guild = om.getOneBy(Guild, Guild.guildId, str(member.guild.id))
+        if guild is None:
+            guild = Guild(guildId=str(member.guild.id))
+            om.add(guild)
+        if discordUser is not None:
+            guild.osuMentionOnTopPlay.remove(discordUser)
+            guild.maniaMentionOnTopPlay.remove(discordUser)
+            guild.taikoMentionOnTopPlay.remove(discordUser)
+            guild.catchMentionOnTopPlay.remove(discordUser)
+
+        om.flush()
+
 
     @bot.event
     async def on_message(ctx: discord.Message):
