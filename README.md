@@ -55,7 +55,7 @@ If you just want to run it use:
 If you want to help with development I recommend using this instead:
 
 ```
-pip install osuSwissBot[test]
+pip install osuSwissBot[tests]
 ```
 
 This will also install pylama so that you can use the coding standard.
