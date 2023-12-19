@@ -19,6 +19,7 @@ from ..dataManager import DataManager
 from ..database.entities.guild import Guild
 from ..database.objectManager import ObjectManager
 from ..database.entities.osuUser import OsuUser
+from ..helper import Validator, GuildHelper
 from ..prepareReplay.prepareReplayManager import createAll
 from ..botFeatures.buttons.thumbnail import Thumbnail
 
@@ -54,7 +55,10 @@ async def getUsersFromWebsite(pages: int, gameMode=GameMode.OSU, country='ch') -
     return osuUsers
 
 
-async def createScoreEmbed(osuUser: OsuUser, score: ossapi.Score, beatmap: ossapi.Beatmap) -> Embed:
+async def createScoreEmbed(osuUser: OsuUser, score: ossapi.Score, beatmap: ossapi.Beatmap, gamemode: ossapi.GameMode) -> Embed:
+
+    if gamemode != ossapi.GameMode.OSU:
+        raise Exception('OSU is the only functional embed currently')
     mods = score.mods.short_name()
     if mods == '':
         mods = 'NM'
@@ -98,11 +102,18 @@ class OsuHandler:
 
     __osu: OssapiAsync
 
-    def __init__(self, om: ObjectManager, config: dict):
+    __validator: Validator
+
+    __guildHelper: GuildHelper
+
+    def __init__(self, om: ObjectManager, config: dict, validator: Validator, guildHelper: GuildHelper):
         self.__om = om
+        self.__validator = validator
         self.__osu = OssapiAsync(int(config['clientId']),
                                  config['clientSecret'], 'http://localhost:3914/', ['public', 'identify'],
                                  grant="authorization")
+
+        self.__guildHelper = guildHelper
 
     async def getUsersFromAPI(self, pages: int, gamemode: GameMode.OSU, country: str = 'ch') -> list[UserStatistics]:
         osuUsers = []
@@ -116,6 +127,10 @@ class OsuHandler:
         scores = await self.__osu.user_scores(osuUser.id, ScoreType.RECENT, include_fails=False, limit=20, mode=mode)
         jsonScores = DataManager.getOrCreateJson('lastScores')
         tempScores = []
+
+        self.__validator.isGamemode(mode, throw=True)
+
+
         for score in scores:
             score: ossapi.Score
             tempScores.append(score.id)
@@ -142,10 +157,11 @@ class OsuHandler:
                         elif score.pp == topPlays[0].pp and int(score.pp // 100) == int(topPlays[1].pp):
                             message = f'{" ".join(mentions)} this person broke the {int(score.pp / 100) * 100}pp barrier'
 
-                    if guild.osuScoresChannel is not None:
-                        await bot.get_channel(int(guild.osuScoresChannel)).send(
+                    channel = self.__guildHelper.getScoresChannel(guild, mode)
+                    if channel is not None:
+                        await bot.get_channel(int(channel)).send(
                             message,
-                            embed=await createScoreEmbed(osuUser, score, beatmap),
+                            embed=await createScoreEmbed(osuUser, score, beatmap, mode),
                             view=Thumbnail(self.__osu, bot, osuUser.id, score, beatmap)
                         )
 
@@ -154,17 +170,11 @@ class OsuHandler:
 
     async def getRecentPlays(self, bot: commands.Bot, mode: ossapi.GameMode = ossapi.GameMode.OSU,
                              ranks: list[int] | None = None):
-        match mode:
-            case ossapi.GameMode.OSU:
-                osuUserFilter = OsuUser.osuRank
-            case ossapi.GameMode.MANIA:
-                osuUserFilter = OsuUser.maniaRank
-            case ossapi.GameMode.TAIKO:
-                osuUserFilter = OsuUser.taikoRank
-            case ossapi.GameMode.CATCH:
-                osuUserFilter = OsuUser.catchRank
-            case _:
-                raise Exception('Define a valid gamemode')
+
+        if not self.__validator.isGamemode(mode):
+            raise ValueError('Invalid gamemode')
+
+        osuUserFilter = OsuUser.__getattribute__(OsuUser, mode.value + 'Rank')
 
         select = self.__om.select(OsuUser)
         if ranks is None:

@@ -1,24 +1,33 @@
 import discord
 from discord.ext import commands
 from discord import Option
+import ossapi
 
 from src.database.entities.discordUser import DiscordUser
 from src.database.entities.guild import Guild
 from src.database.objectManager import ObjectManager
+from src.helper import Validator, GuildHelper
+
 
 class MentionCommands(commands.Cog):
     bot: commands.Bot
 
     om: ObjectManager
 
-    def __init__(self, bot, om):
+    validator: Validator
+
+    guildHelper: GuildHelper
+
+    def __init__(self, bot, om, validator, guildHelper):
         self.bot = bot
         self.om = om
+        self.validator = validator
+        self.guildHelper = guildHelper
 
-    async def memberListEmbed(self, guild: discord.Guild, gamemode: str, mentionList: list[DiscordUser]) -> discord.Embed:
+    async def memberListEmbed(self, guild: discord.Guild, gamemode: ossapi.GameMode, mentionList: list[DiscordUser]) -> discord.Embed:
         embed: discord.Embed = discord.Embed(colour=16007990)
         embed.set_author(
-            name=f'Mention list for {gamemode}',
+            name=f'Mention list for {gamemode.value}',
         )
 
         if not mentionList:
@@ -53,21 +62,16 @@ class MentionCommands(commands.Cog):
             discordUser = DiscordUser(userId=userid)
             self.om.add(discordUser)
 
-        match gamemode:
-            case 'osu':
-                if discordUser not in guild.osuMentionOnTopPlay:
-                    guild.osuMentionOnTopPlay.append(discordUser)
-            case 'mania':
-                if discordUser not in guild.maniaMentionOnTopPlay:
-                    guild.maniaMentionOnTopPlay.append(discordUser)
-            case 'taiko':
-                if discordUser not in guild.taikoMentionOnTopPlay:
-                    guild.taikoMentionOnTopPlay.append(discordUser)
-            case 'catch':
-                if discordUser not in guild.catchMentionOnTopPlay:
-                    guild.catchMentionOnTopPlay.append(discordUser)
+        try:
+            gamemode: ossapi.GameMode = ossapi.GameMode.__getattribute__(ossapi.GameMode, gamemode.upper())
+            if type(gamemode) is not ossapi.GameMode:
+                raise KeyError
+        except KeyError:
+            raise ValueError(f"Invalid gamemode")
 
-        await ctx.response.send_message('user ' + member.mention + ' added to the ' + gamemode + ' scores mention list.')
+        self.guildHelper.addMentionForScores(guild, discordUser, gamemode)
+
+        await ctx.response.send_message('user ' + member.mention + ' added to the ' + gamemode.value + ' scores mention list.')
         self.om.flush()
 
     @commands.slash_command(description="remove a user from the mention list")
@@ -93,21 +97,16 @@ class MentionCommands(commands.Cog):
         if discordUser is None:
             await ctx.response.send_message('user was never added to the list')
 
-        match gamemode:
-            case 'osu':
-                if discordUser in guild.osuMentionOnTopPlay:
-                    guild.osuMentionOnTopPlay.remove(discordUser)
-            case 'mania':
-                if discordUser in guild.maniaMentionOnTopPlay:
-                    guild.maniaMentionOnTopPlay.remove(discordUser)
-            case 'taiko':
-                if discordUser in guild.taikoMentionOnTopPlay:
-                    guild.taikoMentionOnTopPlay.remove(discordUser)
-            case 'catch':
-                if discordUser in guild.catchMentionOnTopPlay:
-                    guild.catchMentionOnTopPlay.remove(discordUser)
+        try:
+            gamemode: ossapi.GameMode = ossapi.GameMode.__getattribute__(ossapi.GameMode, gamemode.upper())
+            if type(gamemode) is not ossapi.GameMode:
+                raise KeyError
+        except KeyError:
+            raise ValueError(f"Invalid gamemode")
 
-        await ctx.response.send_message('user ' + member.mention + ' removed from the ' + gamemode + ' scores mention list.')
+        self.guildHelper.removeMentionForScores(guild, discordUser, gamemode)
+
+        await ctx.response.send_message('user ' + member.mention + ' removed from the ' + gamemode.value + ' scores mention list.')
         self.om.flush()
 
     @commands.slash_command(description="show the mention list")
@@ -123,15 +122,14 @@ class MentionCommands(commands.Cog):
             guild = Guild(guildId=str(ctx.guild_id))
             self.om.add(guild)
 
-        match gamemode:
-            case 'mania':
-                mentionList = guild.maniaMentionOnTopPlay
-            case 'taiko':
-                mentionList = guild.taikoMentionOnTopPlay
-            case 'catch':
-                mentionList = guild.catchMentionOnTopPlay
-            case _:
-                mentionList = guild.osuMentionOnTopPlay
+        try:
+            gamemode: ossapi.GameMode = ossapi.GameMode.__getattribute__(ossapi.GameMode, gamemode.upper())
+            if type(gamemode) is not ossapi.GameMode:
+                raise KeyError
+        except KeyError:
+            raise ValueError(f"Invalid gamemode")
+
+        mentionList = self.guildHelper.getMentionForScores(guild, gamemode)
 
         embed = await self.memberListEmbed(ctx.guild, gamemode, mentionList)
 
