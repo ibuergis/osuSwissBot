@@ -47,7 +47,7 @@ class GuildCommands(commands.Cog):
             if type(gamemode) is not ossapi.GameMode:
                 raise KeyError
         except KeyError:
-            raise ValueError(f"Invalid gamemode")
+            raise ValueError("Invalid gamemode")
 
         guild.__setattr__(gamemode.value + 'ScoresChannel', channelid)
 

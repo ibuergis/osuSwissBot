@@ -1,7 +1,6 @@
 import json
 
 import discord
-import ossapi
 from discord.ext import commands
 
 from src.botFeatures.commands.adminCommands.guildCommands import GuildCommands

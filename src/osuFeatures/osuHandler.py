@@ -18,7 +18,7 @@ from .calculations import gradeCalculator, gradeConverter, calculateScoreViaApi
 from ..dataManager import DataManager
 from ..database.entities.guild import Guild
 from ..database.objectManager import ObjectManager
-from ..database.entities.osuUser import OsuUser
+from ..database.entities import OsuUser
 from ..helper import Validator, GuildHelper
 from ..prepareReplay.prepareReplayManager import createAll
 from ..botFeatures.buttons.thumbnail import Thumbnail
@@ -129,7 +129,6 @@ class OsuHandler:
         tempScores = []
 
         self.__validator.isGamemode(mode, throw=True)
-
 
         for score in scores:
             score: ossapi.Score

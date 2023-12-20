@@ -24,7 +24,12 @@ class MentionCommands(commands.Cog):
         self.validator = validator
         self.guildHelper = guildHelper
 
-    async def memberListEmbed(self, guild: discord.Guild, gamemode: ossapi.GameMode, mentionList: list[DiscordUser]) -> discord.Embed:
+    async def memberListEmbed(
+            self,
+            guild: discord.Guild,
+            gamemode: ossapi.GameMode,
+            mentionList: list[DiscordUser]
+    ) -> discord.Embed:
         embed: discord.Embed = discord.Embed(colour=16007990)
         embed.set_author(
             name=f'Mention list for {gamemode.value}',
@@ -67,7 +72,7 @@ class MentionCommands(commands.Cog):
             if type(gamemode) is not ossapi.GameMode:
                 raise KeyError
         except KeyError:
-            raise ValueError(f"Invalid gamemode")
+            raise ValueError("Invalid gamemode")
 
         self.guildHelper.addMentionForScores(guild, discordUser, gamemode)
 
@@ -102,11 +107,11 @@ class MentionCommands(commands.Cog):
             if type(gamemode) is not ossapi.GameMode:
                 raise KeyError
         except KeyError:
-            raise ValueError(f"Invalid gamemode")
+            raise ValueError("Invalid gamemode")
 
         self.guildHelper.removeMentionForScores(guild, discordUser, gamemode)
 
-        await ctx.response.send_message('user ' + member.mention + ' removed from the ' + gamemode.value + ' scores mention list.')
+        await ctx.response.send_message('user ' + member.mention + ' removed from the ' + gamemode.value + ' scores mention list.') # noqa
         self.om.flush()
 
     @commands.slash_command(description="show the mention list")
@@ -127,7 +132,7 @@ class MentionCommands(commands.Cog):
             if type(gamemode) is not ossapi.GameMode:
                 raise KeyError
         except KeyError:
-            raise ValueError(f"Invalid gamemode")
+            raise ValueError("Invalid gamemode")
 
         mentionList = self.guildHelper.getMentionForScores(guild, gamemode)
 

@@ -32,3 +32,4 @@ ignore = "E302"
 
 [tool.pylama.linter.pyflakes]
 ignore = "E0602"
+disable = "*__init__.py"
