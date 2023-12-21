@@ -31,7 +31,7 @@ if __name__ == '__main__':
     validator = Validator()
     guildHelper = GuildHelper(validator)
 
-    osuHandler: OsuHandler = OsuHandler(om, config, validator)
+    osuHandler: OsuHandler = OsuHandler(om, config, validator, guildHelper)
 
     funCommands: FunCommands | None = None
     emojis = None
