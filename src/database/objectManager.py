@@ -21,11 +21,11 @@ class ObjectManager:
         selectBy = select(Class).where(column == value)
         if throw:
             return self.orm.execute(selectBy).scalar_one()
-        else:
-            try:
-                return self.orm.execute(selectBy).scalar_one()
-            except NoResultFound:
-                return None
+
+        try:
+            return self.orm.execute(selectBy).scalar_one()
+        except NoResultFound:
+            return None
 
     def getBy(self, Class, column, value):
         selectBy = select(Class).where(column == value)

@@ -1,9 +1,12 @@
 import discord
+import ossapi
 from discord.ext import commands
 from discord import Option
 
 from src.database.entities.guild import Guild
 from src.database.objectManager import ObjectManager
+from src.helper import Validator
+
 
 class GuildCommands(commands.Cog):
 
@@ -11,9 +14,12 @@ class GuildCommands(commands.Cog):
 
     om: ObjectManager
 
-    def __init__(self, bot, om):
+    validator: Validator
+
+    def __init__(self, bot, om, validator):
         self.bot = bot
         self.om = om
+        self.validator = validator
 
     @commands.slash_command(description="Decide which channel the scores should be spammed on")
     @commands.has_permissions(administrator=True)
@@ -32,19 +38,18 @@ class GuildCommands(commands.Cog):
 
         channel = ctx.guild.get_channel(int(channelid))
 
-        if (channel is None):
+        if channel is None:
             await ctx.response.send_message('This channel does not exist or isnt from this guild')
             return None
 
-        match gamemode:
-            case 'osu':
-                guild.osuScoresChannel = channelid
-            case 'mania':
-                guild.maniaScoresChannel = channelid
-            case 'taiko':
-                guild.taikoScoresChannel = channelid
-            case 'catch':
-                guild.catchScoresChannel = channelid
+        try:
+            gamemode: ossapi.GameMode = ossapi.GameMode.__getattribute__(ossapi.GameMode, gamemode.upper())
+            if type(gamemode) is not ossapi.GameMode:
+                raise KeyError
+        except KeyError:
+            raise ValueError("Invalid gamemode")
 
-        await ctx.response.send_message('set Score channel for ' + gamemode + ' to ' + channel.mention)
+        guild.__setattr__(gamemode.value + 'ScoresChannel', channelid)
+
+        await ctx.response.send_message('set Score channel for ' + gamemode.value + ' to ' + channel.mention)
         self.om.flush()

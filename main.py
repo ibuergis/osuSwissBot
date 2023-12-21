@@ -12,8 +12,9 @@ from src.osuFeatures.osuHandler import OsuHandler
 from src.botFeatures.automation import Automation
 from src.botFeatures.commands.funCommands import FunCommands
 from src.botFeatures.emojis import Emojis
-from src.database.objectManager import ObjectManager
-from src.database.entities.guild import Guild
+from src.database import ObjectManager
+from src.database.entities import Guild
+from src.helper import Validator, GuildHelper
 
 loaded = False
 
@@ -27,15 +28,18 @@ if __name__ == '__main__':
 
     om = ObjectManager(config)
 
-    osuHandler: OsuHandler = OsuHandler(om, config)
+    validator = Validator()
+    guildHelper = GuildHelper(validator)
+
+    osuHandler: OsuHandler = OsuHandler(om, config, validator, guildHelper)
 
     funCommands: FunCommands | None = None
     emojis = None
 
     bot.add_cog(ReplayCommands(bot, osuHandler))
     bot.add_cog(MiscCommands(bot))
-    bot.add_cog(GuildCommands(bot, om))
-    bot.add_cog(MentionCommands(bot, om))
+    bot.add_cog(GuildCommands(bot, om, validator))
+    bot.add_cog(MentionCommands(bot, om, validator, guildHelper))
 
 @bot.event
 async def on_ready():

@@ -43,7 +43,6 @@ async def gradeCalculator(n300: int = 0, n100: int = 0, n50: int = 0, miss: int 
         return 'B'
     if 100 / objectCount * n300 > 60:
         return 'C'
-
     return 'D'
 
 async def gradeConverter(grade: str, mods: ossapi.Mod) -> Grade:

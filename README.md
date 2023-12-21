@@ -49,10 +49,10 @@ Go to the folder where the project is in and open terminal.
 
 If you just want to run it use:
 ```
-    pip install osuSwissBot
+    pip install .
 ```
 
-If you want to help with development I recommend using this instead:
+If you want to help with development I recommend installing this too:
 
 ```
 pip install osuSwissBot[tests]
