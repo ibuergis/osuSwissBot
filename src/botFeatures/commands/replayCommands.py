@@ -1,4 +1,5 @@
 import discord
+import ossapi
 from discord import Option
 from discord.ext import commands
 
@@ -25,6 +26,8 @@ class ReplayCommands(commands.Cog):
             shortentitle: Option(bool, description='removes the featured artists in the title', default=False), # noqa
             gamemode: Option(str, choices=['osu', 'mania', 'taiko', 'catch'], description='the gamemode to pick', default='osu'), # noqa
     ):
+
+        gamemode = ossapi.GameMode.__getattribute__(ossapi.GameMode, gamemode.upper())
         channel = self.bot.get_channel(ctx.channel_id)
         await ctx.respond('replay is being prepared')
         await ctx.trigger_typing()

@@ -30,7 +30,7 @@ async def getUsersFromWebsite(pages: int, gameMode=GameMode.OSU, country='ch') -
     osuUsers = []
     for page in range(pages):
         page += 1
-        page = urlopen(f'https://osu.ppy.sh/rankings/{gameMode}/performance?country={country}&page={page}')
+        page = urlopen(f'https://osu.ppy.sh/rankings/{gameMode.value}/performance?country={country}&page={page}')
         html_bytes = page.read()
         html: str = ''.join(html_bytes.decode("utf-8").split('\n'))
         ''.join(html.split('\n'))
@@ -39,8 +39,8 @@ async def getUsersFromWebsite(pages: int, gameMode=GameMode.OSU, country='ch') -
             SingleTD = regex.findall('<td.*?</td>', osuUserHtml)[:2]
             rank = regex.findall('>.*?<', SingleTD[0])[0]
 
-            id = regex.findall(f'https://osu.ppy.sh/users/.*?/{gameMode}', SingleTD[1])[0].replace(
-                'https://osu.ppy.sh/users/', '').replace(f'/{gameMode}', '')
+            id = regex.findall(f'https://osu.ppy.sh/users/.*?/{gameMode.value}', SingleTD[1])[0].replace(
+                'https://osu.ppy.sh/users/', '').replace(f'/{gameMode.value}', '')
             linking = regex.findall('<a.*?</a>', SingleTD[1])[1]
             username = regex.findall('>.*?<', linking)[0]
 
@@ -170,8 +170,7 @@ class OsuHandler:
     async def getRecentPlays(self, bot: commands.Bot, mode: ossapi.GameMode = ossapi.GameMode.OSU,
                              ranks: list[int] | None = None):
 
-        if not self.__validator.isGamemode(mode):
-            raise ValueError('Invalid gamemode')
+        self.__validator.isGamemode(mode, throw=True)
 
         osuUserFilter = OsuUser.__getattribute__(OsuUser, mode.value + 'Rank')
 
@@ -212,19 +211,13 @@ class OsuHandler:
             scoreId: int,
             description: str = '',
             shortenTitle: bool = False,
-            gamemode: str = 'osu'
+            gamemode: ossapi.GameMode = ossapi.GameMode.OSU
     ) -> bool | None:
 
-        gamemode = gamemode.lower()
-        gamemodes = {
-            'osu': ossapi.GameMode.OSU,
-            'mania': ossapi.GameMode.MANIA,
-            'taiko': ossapi.GameMode.TAIKO,
-            'catch': ossapi.GameMode.CATCH
-        }
-        mode = gamemodes[gamemode]
+        self.__validator.isGamemode(gamemode, throw=True)
+
         try:
-            score: ossapi.Score = await self.__osu.score(mode, scoreId)
+            score: ossapi.Score = await self.__osu.score(gamemode, scoreId)
         except ValueError:
             return None
 
