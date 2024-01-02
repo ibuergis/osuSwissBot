@@ -5,9 +5,11 @@ from discord.ext import commands
 
 from src.botFeatures.commands.adminCommands.guildCommands import GuildCommands
 from src.botFeatures.commands.adminCommands.mentionCommands import MentionCommands
+from src.botFeatures.commands.adminCommands.skinCommands import SkinCommands
 from src.botFeatures.commands.miscCommands import MiscCommands
 from src.botFeatures.commands.replayCommands import ReplayCommands
 from src.database.entities.discordUser import DiscordUser
+from src.helper.osuUserHelper import OsuUserHelper
 from src.osuFeatures.osuHandler import OsuHandler
 from src.botFeatures.automation import Automation
 from src.botFeatures.commands.funCommands import FunCommands
@@ -29,9 +31,12 @@ if __name__ == '__main__':
     om = ObjectManager(config)
 
     validator = Validator()
+
     guildHelper = GuildHelper(validator)
 
     osuHandler: OsuHandler = OsuHandler(om, config, validator, guildHelper)
+
+    osuUserHelper = OsuUserHelper(osuHandler, om, validator)
 
     funCommands: FunCommands | None = None
     emojis = None
@@ -40,6 +45,7 @@ if __name__ == '__main__':
     bot.add_cog(MiscCommands(bot))
     bot.add_cog(GuildCommands(bot, om, validator))
     bot.add_cog(MentionCommands(bot, om, validator, guildHelper))
+    bot.add_cog(SkinCommands(bot, om, validator, osuUserHelper))
 
 @bot.event
 async def on_ready():

@@ -1,6 +1,7 @@
-from sqlalchemy import String
+from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
+from .skin import Skin
 from .base import Base
 
 
@@ -13,4 +14,5 @@ class OsuUser(Base):
     maniaRank: Mapped[int] = mapped_column(nullable=True, default=None)
     taikoRank: Mapped[int] = mapped_column(nullable=True, default=None)
     catchRank: Mapped[int] = mapped_column(nullable=True, default=None)
+    skin: Mapped[Skin] = mapped_column(ForeignKey('skin.id'))
     country: Mapped[str] = mapped_column(String[2])
