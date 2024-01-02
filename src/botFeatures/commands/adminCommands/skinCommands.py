@@ -20,14 +20,16 @@ class SkinCommands(commands.Cog):
 
     osuUserHelper: OsuUserHelper
 
+    commandGroup = discord.SlashCommandGroup("skin", "commands used to manage skins")
+
     def __init__(self, bot, om, validator, osuUserHelper):
         self.bot = bot
         self.om = om
         self.validator = validator
         self.osuUserHelper = osuUserHelper
 
-    @commands.slash_command(description="get the skin from a player")
-    async def getskin(
+    @commandGroup.command(description="get the skin from a player")
+    async def get(
         self,
         ctx: discord.ApplicationContext,
         *,
@@ -46,8 +48,8 @@ class SkinCommands(commands.Cog):
             skin: Skin = self.om.get(Skin, osuUser.skin)
             await ctx.respond(file=discord.File(os.getcwd() + '//data//skins//' + skin.hash + '.osk', osuUser.username + '.osk'))
 
-    @commands.slash_command(description="add a skin to a player")
-    async def addskin(
+    @commandGroup.command(description="add a skin to a player")
+    async def add(
             self,
             ctx: discord.ApplicationContext,
             *,
@@ -91,8 +93,8 @@ class SkinCommands(commands.Cog):
         self.om.flush()
         await ctx.respond('skin added!')
 
-    @commands.slash_command(description="remove a skin from a player")
-    async def removeskin(
+    @commandGroup.command(description="remove a skin from a player")
+    async def remove(
             self,
             ctx: discord.ApplicationContext,
             *,
