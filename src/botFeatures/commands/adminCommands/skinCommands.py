@@ -3,12 +3,15 @@ import os
 import discord
 from discord.ext import commands
 from discord import Option
+import shutil
 import hashlib
 
 from src.database.entities import Skin
 from src.database.objectManager import ObjectManager
 from src.helper import Validator
 from src.helper.osuUserHelper import OsuUserHelper
+
+from src.tempfiles import uploadFile
 
 
 class SkinCommands(commands.Cog):
@@ -46,7 +49,19 @@ class SkinCommands(commands.Cog):
             await ctx.respond('user has no skin saved')
         else:
             skin: Skin = self.om.get(Skin, osuUser.skin)
-            await ctx.respond(file=discord.File(os.getcwd() + '//data//skins//' + skin.hash + '.osk', osuUser.username + '.osk'))
+            try:
+                tempFilePath = shutil.copy(
+                    os.getcwd() + '//data//skins//' + skin.hash + '.osk',
+                    os.getcwd() + '//data//temp//' + osuUser.username + '.osk'
+                )
+                file = open(tempFilePath, 'rb')
+            except FileNotFoundError:
+                await ctx.respond('user has no skin saved')
+                return None
+            link = uploadFile(file)
+            await ctx.respond(link)
+            file.close()
+            os.remove(tempFilePath)
 
     @commandGroup.command(description="add a skin to a player")
     async def add(
@@ -70,7 +85,10 @@ class SkinCommands(commands.Cog):
         if osuUser.skin is not None:
             skin = self.om.get(Skin, osuUser.skin)
             if len(skin.osuUsers) <= 1:
-                os.remove(os.getcwd() + '//data//skins//' + skin.hash + '.osk')
+                try:
+                    os.remove(os.getcwd() + '//data//skins//' + skin.hash + '.osk')
+                except FileNotFoundError:
+                    pass
                 self.om.delete(skin)
 
         cutSkinName = skinfile.filename.split('.')
@@ -110,7 +128,10 @@ class SkinCommands(commands.Cog):
 
         skin = self.om.get(Skin, osuUser.skin)
         if len(skin.osuUsers) <= 1:
-            os.remove(os.getcwd() + '//data//skins//' + skin.hash + '.osk')
+            try:
+                os.remove(os.getcwd() + '//data//skins//' + skin.hash + '.osk')
+            except FileNotFoundError:
+                pass
             self.om.delete(skin)
 
         osuUser.skin = None
