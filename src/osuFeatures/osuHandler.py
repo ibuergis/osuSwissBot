@@ -115,6 +115,21 @@ class OsuHandler:
 
         self.__guildHelper = guildHelper
 
+    async def getUserFromAPI(self, usernameOrId: str | int, *, forceById: bool = False) -> ossapi.User:
+        user = None
+        if not forceById:
+            user = await self.__osu.user(usernameOrId)
+
+        if user is not None:
+            return user
+
+        try:
+            user = await self.__osu.user(int(usernameOrId))
+        except ValueError:
+            pass
+
+        return user
+
     async def getUsersFromAPI(self, pages: int, gamemode: GameMode.OSU, country: str = 'ch') -> list[UserStatistics]:
         osuUsers = []
         for page in range(pages):
