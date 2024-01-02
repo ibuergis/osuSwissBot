@@ -1,7 +1,7 @@
 from ..database import ObjectManager
 from . import Validator
 from src.osuFeatures.osuHandler import OsuHandler
-from ..database.entities import OsuUser, Skin
+from ..database.entities import OsuUser
 
 
 class OsuUserHelper:
@@ -42,6 +42,3 @@ class OsuUserHelper:
             return osuUser
 
         return osuUser
-
-    async def getSkin(self, osuUser: OsuUser):
-        return self.om.get(Skin, osuUser.skin)
