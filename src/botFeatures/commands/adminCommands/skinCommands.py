@@ -49,10 +49,11 @@ class SkinCommands(commands.Cog):
             await ctx.respond('user has no skin saved')
         else:
             skin: Skin = self.om.get(Skin, osuUser.skin)
+            skinName = osuUser.username if osuUser.skinName is None else osuUser.skinName
             try:
                 tempFilePath = shutil.copy(
                     os.getcwd() + '//data//skins//' + skin.hash + '.osk',
-                    os.getcwd() + '//data//temp//' + osuUser.username + '.osk'
+                    os.getcwd() + '//data//temp//' + skinName + '.osk'
                 )
                 file = open(tempFilePath, 'rb')
             except FileNotFoundError:
@@ -96,6 +97,9 @@ class SkinCommands(commands.Cog):
             await ctx.respond('filetype should be osk')
             return None
 
+        del cutSkinName[len(cutSkinName) - 1]
+        skinName = ".".join(cutSkinName)
+
         skin = self.om.getOneBy(Skin, Skin.hash, hash)
 
         if skin is None:
@@ -108,6 +112,7 @@ class SkinCommands(commands.Cog):
             self.om.flush()
 
         osuUser.skin = skin.id
+        osuUser.skinName = skinName
         self.om.flush()
         await ctx.respond('skin added!')
 
@@ -135,6 +140,7 @@ class SkinCommands(commands.Cog):
             self.om.delete(skin)
 
         osuUser.skin = None
+        osuUser.skinName = None
 
         self.om.flush()
         await ctx.respond('Skin removed!')
