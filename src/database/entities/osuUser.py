@@ -15,4 +15,5 @@ class OsuUser(Base):
     taikoRank: Mapped[int] = mapped_column(nullable=True, default=None)
     catchRank: Mapped[int] = mapped_column(nullable=True, default=None)
     skin: Mapped[Skin] = mapped_column(ForeignKey('skin.id'))
+    skinName: Mapped[str] = mapped_column(String[1000])
     country: Mapped[str] = mapped_column(String[2])
