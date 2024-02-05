@@ -202,6 +202,8 @@ class OsuHandler:
 
     async def updateUsers(self):
         usersFromApi: list[UserStatistics] = await self.getUsersFromAPI(2, GameMode.OSU, 'ch')
+        taikousersFromApi: list[UserStatistics] = await self.getUsersFromAPI(1, GameMode.TAIKO, 'ch')
+        catchusersFromApi: list[UserStatistics] = await self.getUsersFromAPI(1, GameMode.CATCH, 'ch')
 
         currentRank = 0
         for userFromApi in usersFromApi:
@@ -218,6 +220,38 @@ class OsuHandler:
             else:
                 osuUser.username = userFromApi.user.username
                 osuUser.osuRank = currentRank
+
+        currentRank = 0
+        for taikouserFromApi in taikousersFromApi:
+            osuUser: OsuUser = self.__om.get(OsuUser, taikouserFromApi.user.id)
+            currentRank += 1
+            if osuUser is None:
+                osuUser = OsuUser(
+                    id=taikouserFromApi.user.id,
+                    username=taikouserFromApi.user.username,
+                    taikoRank=currentRank,
+                    country='ch'
+                )
+                self.__om.add(osuUser)
+            else:
+                osuUser.username = taikouserFromApi.user.username
+                osuUser.taikoRank = currentRank
+
+        currentRank = 0
+        for catchuserFromApi in catchusersFromApi:
+            osuUser: OsuUser = self.__om.get(OsuUser, catchuserFromApi.user.id)
+            currentRank += 1
+            if osuUser is None:
+                osuUser = OsuUser(
+                    id=catchuserFromApi.user.id,
+                    username=catchuserFromApi.user.username,
+                    catchRank=currentRank,
+                    country='ch'
+                )
+                self.__om.add(osuUser)
+            else:
+                osuUser.username = catchuserFromApi.user.username
+                osuUser.catchRank = currentRank
 
         self.__om.flush()
 
