@@ -57,8 +57,8 @@ async def getUsersFromWebsite(pages: int, gameMode=GameMode.OSU, country='ch') -
 
 async def createScoreEmbed(osuUser: OsuUser, score: ossapi.Score, beatmap: ossapi.Beatmap, gamemode: ossapi.GameMode) -> Embed:
 
-    if gamemode != ossapi.GameMode.OSU:
-        raise Exception('OSU is the only functional embed currently')
+    if gamemode == ossapi.GameMode.MANIA:
+        raise Exception('MANIA is not supported')
     mods = score.mods.short_name()
     if mods == '':
         mods = 'NM'
@@ -138,48 +138,59 @@ class OsuHandler:
             osuUsers.extend(result.ranking)
         return osuUsers
 
+    async def sendScoreEmbeds(self, osuUser: OsuUser, score: ossapi.Score, bot: commands.Bot):
+        mode = score.mode
+        beatmap = await self.__osu.beatmap(score.beatmap.id)
+        topPlays = await self.__osu.user_scores(osuUser.id, ScoreType.BEST, include_fails=False, limit=2,
+                                                mode=mode)
+
+        guilds: list[Guild] = self.__om.getAll(Guild)
+        for guild in guilds:
+
+            mentions = []
+            for discordUser in guild.osuMentionOnTopPlay:
+                user = bot.get_user(int(discordUser.userId))
+                mentions.append(user.mention)
+
+            message = ''
+            if score.pp is not None:
+                if score.pp == topPlays[0].pp:
+                    message = f'{" ".join(mentions)} this is a new top play'
+                elif score.pp == topPlays[0].pp and int(score.pp // 100) == int(topPlays[1].pp):
+                    message = f'{" ".join(mentions)} this person broke the {int(score.pp / 100) * 100}pp barrier'
+
+            channel = self.__guildHelper.getScoresChannel(guild, mode)
+            if channel is not None:
+                await bot.get_channel(int(channel)).send(
+                    message,
+                    embed=await createScoreEmbed(osuUser, score, beatmap, mode),
+                    view=Thumbnail(self.__osu, bot, osuUser.id, score, beatmap)
+                )
+
     async def processRecentUserScores(self, bot: commands.Bot, osuUser: OsuUser, mode: GameMode.OSU):
         scores = await self.__osu.user_scores(osuUser.id, ScoreType.RECENT, include_fails=False, limit=20, mode=mode)
-        jsonScores = DataManager.getOrCreateJson('lastScores')
+        jsonScores = DataManager.getJson('lastScores')
+        if jsonScores is None:
+            jsonScores = {
+                'osu': {},
+                'mania': {},
+                'taiko': {},
+                'catch': {}
+            }
+
+        if str(osuUser.id) not in jsonScores[mode.name.lower()].keys():
+            jsonScores[mode.name.lower()][str(osuUser.id)] = []
+
         tempScores = []
 
         self.__validator.isGamemode(mode, throw=True)
 
         for score in scores:
-            score: ossapi.Score
             tempScores.append(score.id)
-            if str(osuUser.id) not in jsonScores.keys():
-                jsonScores[str(osuUser.id)] = []
+            if score.replay is True and score.id is not None and score.id not in jsonScores[mode.name.lower()][str(osuUser.id)]:
+                await self.sendScoreEmbeds(osuUser, score, bot)
 
-            if score.replay is True and score.id is not None and score.id not in jsonScores[str(osuUser.id)]:
-                beatmap = await self.__osu.beatmap(score.beatmap.id)
-                topPlays = await self.__osu.user_scores(osuUser.id, ScoreType.BEST, include_fails=False, limit=20,
-                                                        mode=mode)
-
-                guilds: list[Guild] = self.__om.getAll(Guild)
-                for guild in guilds:
-
-                    mentions = []
-                    for discordUser in guild.osuMentionOnTopPlay:
-                        user = bot.get_user(int(discordUser.userId))
-                        mentions.append(user.mention)
-
-                    message = ''
-                    if score.pp is not None:
-                        if score.pp == topPlays[0].pp:
-                            message = f'{" ".join(mentions)} this is a new top play'
-                        elif score.pp == topPlays[0].pp and int(score.pp // 100) == int(topPlays[1].pp):
-                            message = f'{" ".join(mentions)} this person broke the {int(score.pp / 100) * 100}pp barrier'
-
-                    channel = self.__guildHelper.getScoresChannel(guild, mode)
-                    if channel is not None:
-                        await bot.get_channel(int(channel)).send(
-                            message,
-                            embed=await createScoreEmbed(osuUser, score, beatmap, mode),
-                            view=Thumbnail(self.__osu, bot, osuUser.id, score, beatmap)
-                        )
-
-        jsonScores[str(osuUser.id)] = tempScores
+        jsonScores[mode.name.lower()][str(osuUser.id)] = tempScores
         DataManager.setJson('lastScores', jsonScores)
 
     async def getRecentPlays(self, bot: commands.Bot, mode: ossapi.GameMode = ossapi.GameMode.OSU,
@@ -187,7 +198,7 @@ class OsuHandler:
 
         self.__validator.isGamemode(mode, throw=True)
 
-        osuUserFilter = OsuUser.__getattribute__(OsuUser, mode.value + 'Rank')
+        osuUserFilter = OsuUser.__getattribute__(OsuUser, mode.name.lower() + 'Rank')
 
         select = self.__om.select(OsuUser)
         if ranks is None:
@@ -202,6 +213,8 @@ class OsuHandler:
 
     async def updateUsers(self):
         usersFromApi: list[UserStatistics] = await self.getUsersFromAPI(2, GameMode.OSU, 'ch')
+        taikousersFromApi: list[UserStatistics] = await self.getUsersFromAPI(1, GameMode.TAIKO, 'ch')
+        catchusersFromApi: list[UserStatistics] = await self.getUsersFromAPI(1, GameMode.CATCH, 'ch')
 
         currentRank = 0
         for userFromApi in usersFromApi:
@@ -218,6 +231,38 @@ class OsuHandler:
             else:
                 osuUser.username = userFromApi.user.username
                 osuUser.osuRank = currentRank
+
+        currentRank = 0
+        for taikouserFromApi in taikousersFromApi:
+            osuUser: OsuUser = self.__om.get(OsuUser, taikouserFromApi.user.id)
+            currentRank += 1
+            if osuUser is None:
+                osuUser = OsuUser(
+                    id=taikouserFromApi.user.id,
+                    username=taikouserFromApi.user.username,
+                    taikoRank=currentRank,
+                    country='ch'
+                )
+                self.__om.add(osuUser)
+            else:
+                osuUser.username = taikouserFromApi.user.username
+                osuUser.taikoRank = currentRank
+
+        currentRank = 0
+        for catchuserFromApi in catchusersFromApi:
+            osuUser: OsuUser = self.__om.get(OsuUser, catchuserFromApi.user.id)
+            currentRank += 1
+            if osuUser is None:
+                osuUser = OsuUser(
+                    id=catchuserFromApi.user.id,
+                    username=catchuserFromApi.user.username,
+                    catchRank=currentRank,
+                    country='ch'
+                )
+                self.__om.add(osuUser)
+            else:
+                osuUser.username = catchuserFromApi.user.username
+                osuUser.catchRank = currentRank
 
         self.__om.flush()
 

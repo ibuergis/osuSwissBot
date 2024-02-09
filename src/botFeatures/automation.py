@@ -11,7 +11,7 @@ class Automation(commands.Cog):
 
     __usersUpdated: bool = False
 
-    __getScoresLoop: int = 1
+    __getScoresLoop: int = 0
 
     def __init__(self, bot: commands.Bot, osuHandler: OsuHandler, checkPlays: bool = True):
         self.__bot = bot
@@ -34,11 +34,24 @@ class Automation(commands.Cog):
 
     @tasks.loop(minutes=2)
     async def getScores(self):
-        rankRange = [self.__getScoresLoop, self.__getScoresLoop + 1]
-        strRankRange = [str(self.__getScoresLoop), str(self.__getScoresLoop + 1)]
-        print(f"[{datetime.now()}]", 'updating players: ' + ", ".join(strRankRange))
-        self.__getScoresLoop = (self.__getScoresLoop + 2) % 50
 
+        standardNumber = self.__getScoresLoop % 25 + 1
+
+        rankRange = [standardNumber, 51 - standardNumber]
+        strRankRange = [str(standardNumber), str(51 - standardNumber)]
+        print(f"[{datetime.now()}]", 'updating standard players: ' + ", ".join(strRankRange))
         await self.__osuHandler.getRecentPlays(self.__bot, GameMode.OSU, rankRange)
+        print(f"[{datetime.now()}]", 'finished updating standard players')
 
-        print(f"[{datetime.now()}]", 'finished updating plays')
+        rankRange = [self.__getScoresLoop % 10 + 1]
+        strRankRange = [str(self.__getScoresLoop % 10 + 1)]
+        print(f"[{datetime.now()}]", 'updating catch players: ' + ", ".join(strRankRange))
+        await self.__osuHandler.getRecentPlays(self.__bot, GameMode.CATCH, rankRange)
+        print(f"[{datetime.now()}]", 'finished updating catch players')
+
+        rankRange = [self.__getScoresLoop % 10 + 1]
+        strRankRange = [str(self.__getScoresLoop % 10 + 1)]
+        print(f"[{datetime.now()}]", 'updating taiko players: ' + ", ".join(strRankRange))
+        await self.__osuHandler.getRecentPlays(self.__bot, GameMode.TAIKO, rankRange)
+        print(f"[{datetime.now()}]", 'finished updating taiko players')
+        self.__getScoresLoop = (self.__getScoresLoop + 1) % 50
