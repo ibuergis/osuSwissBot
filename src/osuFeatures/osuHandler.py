@@ -138,6 +138,35 @@ class OsuHandler:
             osuUsers.extend(result.ranking)
         return osuUsers
 
+    async def sendScoreEmbeds(self, osuUser: OsuUser, score: ossapi.Score, bot: commands.Bot):
+        mode = score.mode
+        beatmap = await self.__osu.beatmap(score.beatmap.id)
+        topPlays = await self.__osu.user_scores(osuUser.id, ScoreType.BEST, include_fails=False, limit=2,
+                                                mode=mode)
+
+        guilds: list[Guild] = self.__om.getAll(Guild)
+        for guild in guilds:
+
+            mentions = []
+            for discordUser in guild.osuMentionOnTopPlay:
+                user = bot.get_user(int(discordUser.userId))
+                mentions.append(user.mention)
+
+            message = ''
+            if score.pp is not None:
+                if score.pp == topPlays[0].pp:
+                    message = f'{" ".join(mentions)} this is a new top play'
+                elif score.pp == topPlays[0].pp and int(score.pp // 100) == int(topPlays[1].pp):
+                    message = f'{" ".join(mentions)} this person broke the {int(score.pp / 100) * 100}pp barrier'
+
+            channel = self.__guildHelper.getScoresChannel(guild, mode)
+            if channel is not None:
+                await bot.get_channel(int(channel)).send(
+                    message,
+                    embed=await createScoreEmbed(osuUser, score, beatmap, mode),
+                    view=Thumbnail(self.__osu, bot, osuUser.id, score, beatmap)
+                )
+
     async def processRecentUserScores(self, bot: commands.Bot, osuUser: OsuUser, mode: GameMode.OSU):
         scores = await self.__osu.user_scores(osuUser.id, ScoreType.RECENT, include_fails=False, limit=20, mode=mode)
         jsonScores = DataManager.getJson('lastScores')
@@ -146,45 +175,20 @@ class OsuHandler:
                 'osu': {},
                 'mania': {},
                 'taiko': {},
-                'catch': {},
-                          }
+                'catch': {}
+            }
+
+        if str(osuUser.id) not in jsonScores[mode.name.lower()].keys():
+            jsonScores[mode.name.lower()][str(osuUser.id)] = []
+
         tempScores = []
 
         self.__validator.isGamemode(mode, throw=True)
 
         for score in scores:
-            score: ossapi.Score
             tempScores.append(score.id)
-            if str(osuUser.id) not in jsonScores.keys():
-                jsonScores[str(osuUser.id)] = []
-
-            if score.replay is True and score.id is not None and score.id not in jsonScores[str(osuUser.id)]:
-                beatmap = await self.__osu.beatmap(score.beatmap.id)
-                topPlays = await self.__osu.user_scores(osuUser.id, ScoreType.BEST, include_fails=False, limit=20,
-                                                        mode=mode)
-
-                guilds: list[Guild] = self.__om.getAll(Guild)
-                for guild in guilds:
-
-                    mentions = []
-                    for discordUser in guild.osuMentionOnTopPlay:
-                        user = bot.get_user(int(discordUser.userId))
-                        mentions.append(user.mention)
-
-                    message = ''
-                    if score.pp is not None:
-                        if score.pp == topPlays[0].pp:
-                            message = f'{" ".join(mentions)} this is a new top play'
-                        elif score.pp == topPlays[0].pp and int(score.pp // 100) == int(topPlays[1].pp):
-                            message = f'{" ".join(mentions)} this person broke the {int(score.pp / 100) * 100}pp barrier'
-
-                    channel = self.__guildHelper.getScoresChannel(guild, mode)
-                    if channel is not None:
-                        await bot.get_channel(int(channel)).send(
-                            message,
-                            embed=await createScoreEmbed(osuUser, score, beatmap, mode),
-                            view=Thumbnail(self.__osu, bot, osuUser.id, score, beatmap)
-                        )
+            if score.replay is True and score.id is not None and score.id not in jsonScores[mode.name.lower()][str(osuUser.id)]:
+                await self.sendScoreEmbeds(osuUser, score, bot)
 
         jsonScores[mode.name.lower()][str(osuUser.id)] = tempScores
         DataManager.setJson('lastScores', jsonScores)

@@ -37,8 +37,8 @@ class Automation(commands.Cog):
 
         standardNumber = self.__getScoresLoop % 25 + 1
 
-        rankRange = [standardNumber, 51-standardNumber]
-        strRankRange = [str(standardNumber), str(51-standardNumber)]
+        rankRange = [standardNumber, 51 - standardNumber]
+        strRankRange = [str(standardNumber), str(51 - standardNumber)]
         print(f"[{datetime.now()}]", 'updating standard players: ' + ", ".join(strRankRange))
         await self.__osuHandler.getRecentPlays(self.__bot, GameMode.OSU, rankRange)
         print(f"[{datetime.now()}]", 'finished updating standard players')
@@ -54,7 +54,4 @@ class Automation(commands.Cog):
         print(f"[{datetime.now()}]", 'updating taiko players: ' + ", ".join(strRankRange))
         await self.__osuHandler.getRecentPlays(self.__bot, GameMode.TAIKO, rankRange)
         print(f"[{datetime.now()}]", 'finished updating taiko players')
-
         self.__getScoresLoop = (self.__getScoresLoop + 1) % 50
-
-
