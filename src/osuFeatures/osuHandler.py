@@ -57,8 +57,8 @@ async def getUsersFromWebsite(pages: int, gameMode=GameMode.OSU, country='ch') -
 
 async def createScoreEmbed(osuUser: OsuUser, score: ossapi.Score, beatmap: ossapi.Beatmap, gamemode: ossapi.GameMode) -> Embed:
 
-    if gamemode != ossapi.GameMode.OSU:
-        raise Exception('OSU is the only functional embed currently')
+    if gamemode == ossapi.GameMode.MANIA:
+        raise Exception('MANIA is not supported')
     mods = score.mods.short_name()
     if mods == '':
         mods = 'NM'
@@ -140,7 +140,14 @@ class OsuHandler:
 
     async def processRecentUserScores(self, bot: commands.Bot, osuUser: OsuUser, mode: GameMode.OSU):
         scores = await self.__osu.user_scores(osuUser.id, ScoreType.RECENT, include_fails=False, limit=20, mode=mode)
-        jsonScores = DataManager.getOrCreateJson('lastScores')
+        jsonScores = DataManager.getJson('lastScores')
+        if jsonScores is None:
+            jsonScores = {
+                'osu': {},
+                'mania': {},
+                'taiko': {},
+                'catch': {},
+                          }
         tempScores = []
 
         self.__validator.isGamemode(mode, throw=True)
@@ -179,7 +186,7 @@ class OsuHandler:
                             view=Thumbnail(self.__osu, bot, osuUser.id, score, beatmap)
                         )
 
-        jsonScores[str(osuUser.id)] = tempScores
+        jsonScores[mode.name.lower()][str(osuUser.id)] = tempScores
         DataManager.setJson('lastScores', jsonScores)
 
     async def getRecentPlays(self, bot: commands.Bot, mode: ossapi.GameMode = ossapi.GameMode.OSU,
@@ -187,7 +194,7 @@ class OsuHandler:
 
         self.__validator.isGamemode(mode, throw=True)
 
-        osuUserFilter = OsuUser.__getattribute__(OsuUser, mode.value + 'Rank')
+        osuUserFilter = OsuUser.__getattribute__(OsuUser, mode.name.lower() + 'Rank')
 
         select = self.__om.select(OsuUser)
         if ranks is None:
