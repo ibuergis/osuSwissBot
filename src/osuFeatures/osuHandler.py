@@ -112,7 +112,6 @@ class OsuHandler:
                             config['clientSecret'], 'http://localhost:3914/', ['public', 'identify'],
                             grant="authorization")
 
-
         self.__guildHelper = guildHelper
 
     def getUserFromAPI(self, usernameOrId: str | int, *, forceById: bool = False) -> ossapi.User:
