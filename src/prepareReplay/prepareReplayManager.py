@@ -18,7 +18,7 @@ def getFont(size: int) -> ImageFont:
     return ImageFont.truetype('data/font/Aller_Bd.ttf', size)
 
 
-async def shortenSongTitle(songTitle: str) -> str:
+def shortenSongTitle(songTitle: str) -> str:
     songTitle = songTitle.split('(feat.', 1)
     if len(songTitle) < 2:
         songTitle = songTitle[0].split('feat.', 1)
@@ -32,7 +32,7 @@ async def shortenSongTitle(songTitle: str) -> str:
     return songTitle
 
 
-async def add_corners(im: Image, rad: int) -> Image:
+def add_corners(im: Image, rad: int) -> Image:
     # Copypasted LMAO
     circle = Image.new('L', (rad * 2, rad * 2), 0)
     draw = ImageDraw.Draw(circle)
@@ -48,7 +48,7 @@ async def add_corners(im: Image, rad: int) -> Image:
     return im
 
 
-async def createThumbnail(user: User, score: Score, beatmap: Beatmap, description: str = '', shortenTitle: bool = False):
+def createThumbnail(user: User, score: Score, beatmap: Beatmap, description: str = '', shortenTitle: bool = False):
     beatmapset = beatmap.beatmapset()
 
     with open(f'data/temp/{score.best_id}.jpg', 'wb+') as f:
@@ -81,7 +81,7 @@ async def createThumbnail(user: User, score: Score, beatmap: Beatmap, descriptio
     thumbnail.paste(template, (0, 0), template)
 
     pfp = Image.open(f'data/temp/{score.best_id}.png').resize((300, 300)).convert('RGBA')
-    pfp = await add_corners(pfp, 85)
+    pfp = add_corners(pfp, 85)
     thumbnail.paste(pfp, (812, 443), pfp)
 
     thumbnail = thumbnail.convert('RGB')
@@ -110,7 +110,7 @@ async def createThumbnail(user: User, score: Score, beatmap: Beatmap, descriptio
     x = (thumbnail.width - getTextLength(getFont(60), artist)) // 2
     drawer.text((x, 30), artist, font=getFont(60), fill=(222, 222, 222))
 
-    songTitle = await shortenSongTitle(beatmapset.title) if shortenTitle else beatmapset.title
+    songTitle = shortenSongTitle(beatmapset.title) if shortenTitle else beatmapset.title
 
     x = (thumbnail.width - getTextLength(getFont(70), songTitle)) // 2
     drawer.text((x, 120), songTitle, font=getFont(70), fill=(255, 255, 255))
@@ -146,10 +146,10 @@ async def createThumbnail(user: User, score: Score, beatmap: Beatmap, descriptio
     thumbnail.save(f'data/output/{score.best_id}.jpg')
 
 
-async def createTitle(osu: ossapi.OssapiAsync, user: User, score: Score, beatmap: Beatmap, shortenTitle: bool = False):
+def createTitle(osu: ossapi.Ossapi, user: User, score: Score, beatmap: Beatmap, shortenTitle: bool = False):
     beatmapset = beatmap.beatmapset()
-    songTitle = await shortenSongTitle(beatmapset.title) if shortenTitle else beatmapset.title
-    detailed: DifficultyAttributes = await osu.beatmap_attributes(beatmap.id, mods=score.mods)
+    songTitle = shortenSongTitle(beatmapset.title) if shortenTitle else beatmapset.title
+    detailed: DifficultyAttributes = osu.beatmap_attributes(beatmap.id, mods=score.mods)
     title = open(f'data/output/{score.best_id}Title', 'w+')
     songInfo = f"{beatmapset.artist} - {songTitle}"
     mapInfo = f"[{beatmap.version}] {round(detailed.attributes.star_rating, 2)}#star# +{score.mods.short_name()}"
@@ -157,7 +157,7 @@ async def createTitle(osu: ossapi.OssapiAsync, user: User, score: Score, beatmap
     title.close()
 
 
-async def createDescription(user: User, score: Score, beatmap: Beatmap):
+def createDescription(user: User, score: Score, beatmap: Beatmap):
     scoreLink = f'https://osu.ppy.sh/scores/{score.mode.value}/{score.best_id}'
     page = requests.get(scoreLink).text.replace('\n', '')
     if re.match('.*Page Missing.*', page):
@@ -176,9 +176,9 @@ async def createDescription(user: User, score: Score, beatmap: Beatmap):
     description.close()
 
 
-async def createReplayFile(osu: ossapi.OssapiAsync, score: Score, gamemode: ossapi.GameMode = ossapi.GameMode.OSU) -> bool:
+def createReplayFile(osu: ossapi.Ossapi, score: Score, gamemode: ossapi.GameMode = ossapi.GameMode.OSU) -> bool:
     try:
-        replay = await osu.download_score(gamemode, score.best_id, raw=True)
+        replay = osu.download_score(gamemode, score.best_id, raw=True)
         with open(f'data/output/{score.best_id}.osr', 'wb+') as f:
             f.write(replay)
             f.close()
@@ -187,15 +187,15 @@ async def createReplayFile(osu: ossapi.OssapiAsync, score: Score, gamemode: ossa
         return False
 
 
-async def createAll(osu: ossapi.OssapiAsync, user: User, score: Score, beatmap: Beatmap, description='',
-                    shortenTitle: bool = False) -> bool:
-    await createThumbnail(user, score, beatmap, description, shortenTitle)
-    await createTitle(osu, user, score, beatmap, shortenTitle)
-    await createDescription(user, score, beatmap)
-    return await createReplayFile(osu, score, score.mode)
+def createAll(osu: ossapi.Ossapi, user: User, score: Score, beatmap: Beatmap, description='',
+              shortenTitle: bool = False) -> bool:
+    createThumbnail(user, score, beatmap, description, shortenTitle)
+    createTitle(osu, user, score, beatmap, shortenTitle)
+    createDescription(user, score, beatmap)
+    return createReplayFile(osu, score, score.mode)
 
 
-def cleanup(scoreId: int):
+async def cleanup(scoreId: int):
     os.remove(f'data/temp/{scoreId}.png')
     os.remove(f'data/temp/{scoreId}.jpg')
     os.remove(f'data/output/{scoreId}Description')

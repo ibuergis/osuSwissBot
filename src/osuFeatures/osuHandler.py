@@ -6,7 +6,7 @@ from discord import Embed
 from discord.ext import commands
 
 import ossapi
-from ossapi import OssapiAsync, GameMode, RankingType, ScoreType, Replay
+from ossapi import Ossapi, GameMode, RankingType, ScoreType, Replay
 
 import os
 import re as regex
@@ -26,7 +26,7 @@ from ..botFeatures.buttons.thumbnail import Thumbnail
 from urllib.request import urlopen
 
 
-async def getUsersFromWebsite(pages: int, gameMode=GameMode.OSU, country='ch') -> list[dict[str | int, Any]]:
+def getUsersFromWebsite(pages: int, gameMode=GameMode.OSU, country='ch') -> list[dict[str | int, Any]]:
     osuUsers = []
     for page in range(pages):
         page += 1
@@ -55,8 +55,7 @@ async def getUsersFromWebsite(pages: int, gameMode=GameMode.OSU, country='ch') -
     return osuUsers
 
 
-async def createScoreEmbed(osuUser: OsuUser, score: ossapi.Score, beatmap: ossapi.Beatmap, gamemode: ossapi.GameMode) -> Embed:
-
+def createScoreEmbed(osuUser: OsuUser, score: ossapi.Score, beatmap: ossapi.Beatmap, gamemode: ossapi.GameMode) -> Embed:
     if gamemode == ossapi.GameMode.MANIA:
         raise Exception('MANIA is not supported')
     mods = score.mods.short_name()
@@ -89,7 +88,7 @@ async def createScoreEmbed(osuUser: OsuUser, score: ossapi.Score, beatmap: ossap
     return embed
 
 
-async def convertModsToList(mods: ossapi.Mod) -> list[str]:
+def convertModsToList(mods: ossapi.Mod) -> list[str]:
     mod = mods.short_name()
     if mod == 'NM':
         mod = ''
@@ -100,7 +99,7 @@ async def convertModsToList(mods: ossapi.Mod) -> list[str]:
 class OsuHandler:
     __om: ObjectManager
 
-    __osu: OssapiAsync
+    __osu: Ossapi
 
     __validator: Validator
 
@@ -109,40 +108,40 @@ class OsuHandler:
     def __init__(self, om: ObjectManager, config: dict, validator: Validator, guildHelper: GuildHelper):
         self.__om = om
         self.__validator = validator
-        self.__osu = OssapiAsync(int(config['clientId']),
-                                 config['clientSecret'], 'http://localhost:3914/', ['public', 'identify'],
-                                 grant="authorization")
+        self.__osu = Ossapi(int(config['clientId']),
+                            config['clientSecret'], 'http://localhost:3914/', ['public', 'identify'],
+                            grant="authorization")
 
         self.__guildHelper = guildHelper
 
-    async def getUserFromAPI(self, usernameOrId: str | int, *, forceById: bool = False) -> ossapi.User:
+    def getUserFromAPI(self, usernameOrId: str | int, *, forceById: bool = False) -> ossapi.User:
         user = None
         if not forceById:
-            user = await self.__osu.user(usernameOrId)
+            user = self.__osu.user(usernameOrId)
 
         if user is not None:
             return user
 
         try:
-            user = await self.__osu.user(int(usernameOrId))
+            user = self.__osu.user(int(usernameOrId))
         except ValueError:
             pass
 
         return user
 
-    async def getUsersFromAPI(self, pages: int, gamemode: GameMode.OSU, country: str = 'ch') -> list[UserStatistics]:
+    def getUsersFromAPI(self, pages: int, gamemode: GameMode.OSU, country: str = 'ch') -> list[UserStatistics]:
         osuUsers = []
         for page in range(pages):
             page += 1
-            result = await self.__osu.ranking(gamemode, RankingType.PERFORMANCE, country=country, cursor={'page': page})
+            result = self.__osu.ranking(gamemode, RankingType.PERFORMANCE, country=country, cursor={'page': page})
             osuUsers.extend(result.ranking)
         return osuUsers
 
-    async def sendScoreEmbeds(self, osuUser: OsuUser, score: ossapi.Score, bot: commands.Bot):
+    def sendScoreEmbeds(self, osuUser: OsuUser, score: ossapi.Score, bot: commands.Bot):
         mode = score.mode
-        beatmap = await self.__osu.beatmap(score.beatmap.id)
-        topPlays = await self.__osu.user_scores(osuUser.id, ScoreType.BEST, include_fails=False, limit=2,
-                                                mode=mode)
+        beatmap = self.__osu.beatmap(score.beatmap.id)
+        topPlays = self.__osu.user_scores(osuUser.id, ScoreType.BEST, include_fails=False, limit=2,
+                                          mode=mode)
 
         guilds: list[Guild] = self.__om.getAll(Guild)
         for guild in guilds:
@@ -161,14 +160,14 @@ class OsuHandler:
 
             channel = self.__guildHelper.getScoresChannel(guild, mode)
             if channel is not None:
-                await bot.get_channel(int(channel)).send(
+                bot.loop.create_task(bot.get_channel(int(channel)).send(
                     message,
-                    embed=await createScoreEmbed(osuUser, score, beatmap, mode),
+                    embed=createScoreEmbed(osuUser, score, beatmap, mode),
                     view=Thumbnail(self.__osu, bot, osuUser.id, score, beatmap)
-                )
+                ))
 
-    async def processRecentUserScores(self, bot: commands.Bot, osuUser: OsuUser, mode: GameMode.OSU):
-        scores = await self.__osu.user_scores(osuUser.id, ScoreType.RECENT, include_fails=False, limit=20, mode=mode)
+    def processRecentUserScores(self, bot: commands.Bot, osuUser: OsuUser, mode: GameMode.OSU):
+        scores = self.__osu.user_scores(osuUser.id, ScoreType.RECENT, include_fails=False, limit=20, mode=mode)
         jsonScores = DataManager.getJson('lastScores')
         if jsonScores is None:
             jsonScores = {
@@ -188,13 +187,13 @@ class OsuHandler:
         for score in scores:
             tempScores.append(score.id)
             if score.replay is True and score.id is not None and score.id not in jsonScores[mode.name.lower()][str(osuUser.id)]:
-                await self.sendScoreEmbeds(osuUser, score, bot)
+                self.sendScoreEmbeds(osuUser, score, bot)
 
         jsonScores[mode.name.lower()][str(osuUser.id)] = tempScores
         DataManager.setJson('lastScores', jsonScores)
 
-    async def getRecentPlays(self, bot: commands.Bot, mode: ossapi.GameMode = ossapi.GameMode.OSU,
-                             ranks: list[int] | None = None):
+    def getRecentPlays(self, bot: commands.Bot, mode: ossapi.GameMode = ossapi.GameMode.OSU,
+                       ranks: list[int] | None = None):
 
         self.__validator.isGamemode(mode, throw=True)
 
@@ -209,12 +208,12 @@ class OsuHandler:
         osuUsers: list[OsuUser] = self.__om.execute(select).scalars()
 
         for osuUser in osuUsers:
-            await self.processRecentUserScores(bot, osuUser, mode)
+            self.processRecentUserScores(bot, osuUser, mode)
 
-    async def updateUsers(self):
-        usersFromApi: list[UserStatistics] = await self.getUsersFromAPI(2, GameMode.OSU, 'ch')
-        taikousersFromApi: list[UserStatistics] = await self.getUsersFromAPI(1, GameMode.TAIKO, 'ch')
-        catchusersFromApi: list[UserStatistics] = await self.getUsersFromAPI(1, GameMode.CATCH, 'ch')
+    def updateUsers(self):
+        usersFromApi: list[UserStatistics] = self.getUsersFromAPI(2, GameMode.OSU, 'ch')
+        taikousersFromApi: list[UserStatistics] = self.getUsersFromAPI(1, GameMode.TAIKO, 'ch')
+        catchusersFromApi: list[UserStatistics] = self.getUsersFromAPI(1, GameMode.CATCH, 'ch')
 
         currentRank = 0
         for userFromApi in usersFromApi:
@@ -266,7 +265,7 @@ class OsuHandler:
 
         self.__om.flush()
 
-    async def prepareReplay(
+    def prepareReplay(
             self,
             scoreId: int,
             description: str = '',
@@ -277,22 +276,22 @@ class OsuHandler:
         self.__validator.isGamemode(gamemode, throw=True)
 
         try:
-            score: ossapi.Score = await self.__osu.score(gamemode, scoreId)
+            score: ossapi.Score = self.__osu.score(gamemode, scoreId)
         except ValueError:
             return None
 
-        osuUser = await self.__osu.user(score.user_id, mode=score.mode)
-        beatmap = await self.__osu.beatmap(score.beatmap.id)
-        replay = await createAll(self.__osu, osuUser, score, beatmap, description, shortenTitle)
+        osuUser = self.__osu.user(score.user_id, mode=score.mode)
+        beatmap = self.__osu.beatmap(score.beatmap.id)
+        replay = createAll(self.__osu, osuUser, score, beatmap, description, shortenTitle)
         return replay
 
-    async def convertReplayFile(self, file: File) -> Replay:
+    def convertReplayFile(self, file: File) -> Replay:
         replay = osrparse.Replay.from_file(file)
         ossapiReplay = ossapi.Replay(replay, self.__osu)
 
         return ossapiReplay
 
-    async def prepareReplayFromFile(
+    def prepareReplayFromFile(
             self,
             ctx,
             file: File, description:
@@ -300,19 +299,19 @@ class OsuHandler:
             gamemode: str = 'osu'
     ) -> ossapi.Score:
 
-        await file.save(f'data/output/{ctx.author.id}.osr')
+        file.save(f'data/output/{ctx.author.id}.osr')
         file = open(f'data/output/{ctx.author.id}.osr', 'rb')
-        replay = await self.convertReplayFile(file)
+        replay = self.convertReplayFile(file)
         file.close()
         os.remove(f'data/output/{ctx.author.id}.osr')
 
-        user = await self.__osu.user(replay.username)
-        beatmap: ossapi.Beatmap = await self.__osu.beatmap(checksum=replay.beatmap_hash)
+        user = self.__osu.user(replay.username)
+        beatmap: ossapi.Beatmap = self.__osu.beatmap(checksum=replay.beatmap_hash)
 
-        mods = await convertModsToList(replay.mods)
-        calculated = await calculateScoreViaApi(beatmap.id, s100=replay.count_100, s50=replay.count_50,
-                                                miss=replay.count_miss, mods=mods, combo=replay.max_combo)
-        grade = await gradeCalculator(replay.count_300, replay.count_100, replay.count_50, replay.count_miss)
+        mods = convertModsToList(replay.mods)
+        calculated = calculateScoreViaApi(beatmap.id, s100=replay.count_100, s50=replay.count_50,
+                                          miss=replay.count_miss, mods=mods, combo=replay.max_combo)
+        grade = gradeCalculator(replay.count_300, replay.count_100, replay.count_50, replay.count_miss)
 
         score = ossapi.Score()
         score.pp = calculated['local_pp']
@@ -320,9 +319,9 @@ class OsuHandler:
         score.max_combo = replay.max_combo
         score.accuracy = calculated['accuracy'] / 100
         score.mods = replay.mods
-        score.rank = await gradeConverter(grade, replay.mods)
+        score.rank = gradeConverter(grade, replay.mods)
         score.created_at = replay.timestamp
         score.mode = replay.mode
-        await createAll(self.__osu, user, score, beatmap, description, shortenTitle)
+        createAll(self.__osu, user, score, beatmap, description, shortenTitle)
 
         return score

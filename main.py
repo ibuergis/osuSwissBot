@@ -94,6 +94,6 @@ async def on_member_remove(member: discord.Member):
 @bot.event
 async def on_message(ctx: discord.Message):
     if funCommands is not None:
-        await funCommands.checkForEasterEgg(ctx, ctx.content)
+        bot.loop.create_task(funCommands.checkForEasterEgg(ctx, ctx.content))
 
 bot.run(config['botToken'])

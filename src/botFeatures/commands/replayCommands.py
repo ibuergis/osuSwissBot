@@ -29,15 +29,15 @@ class ReplayCommands(commands.Cog):
 
         gamemode = ossapi.GameMode.__getattribute__(ossapi.GameMode, gamemode.upper())
         channel = self.bot.get_channel(ctx.channel_id)
-        await ctx.respond('replay is being prepared')
-        await ctx.trigger_typing()
+
+        self.bot.loop.create_task(ctx.respond('replay is being prepared'))
         files = []
-        response = await self.osuHandler.prepareReplay(scoreid, description, shortentitle, gamemode)
+        response = self.osuHandler.prepareReplay(scoreid, description, shortentitle, gamemode)
 
         if response is None:
             await channel.send('**Score does not exist!**')
         else:
-            if await self.osuHandler.prepareReplay(scoreid, description, shortentitle, gamemode):
+            if self.osuHandler.prepareReplay(scoreid, description, shortentitle, gamemode):
                 error = ''
                 files.append(discord.File(f'data/output/{scoreid}.osr'))
             else:
@@ -60,10 +60,9 @@ class ReplayCommands(commands.Cog):
             shortentitle: Option(bool, description='removes the featured artists in the title', default=False), # noqa
     ):
         channel = self.bot.get_channel(ctx.channel_id)
-        await ctx.respond('replay is being prepared')
-        await ctx.trigger_typing()
+        self.bot.loop.create_task(ctx.respond('replay is being prepared'))
 
-        score = await self.osuHandler.prepareReplayFromFile(ctx, replayfile, description, shortentitle)
+        score = self.osuHandler.prepareReplayFromFile(ctx, replayfile, description, shortentitle)
         files = [await replayfile.to_file(), discord.File(f'data/output/{score.best_id}.jpg')]
         description = open(f'data/output/{score.best_id}Description', 'r').read()
         title = open(f'data/output/{score.best_id}Title', 'r').read().replace('#star#', '⭐')

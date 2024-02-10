@@ -5,7 +5,7 @@ from src.prepareReplay.prepareReplayManager import createAll, cleanup
 
 
 class Thumbnail(discord.ui.View):
-    osu: ossapi.OssapiAsync
+    osu: ossapi.Ossapi
 
     bot: discord.Bot
 
@@ -17,7 +17,7 @@ class Thumbnail(discord.ui.View):
 
     def __init__(
             self,
-            osu: ossapi.OssapiAsync,
+            osu: ossapi.Ossapi,
             bot: commands.Bot,
             userId: int,
             score: ossapi.Score, beatmap: ossapi.Beatmap
@@ -32,9 +32,9 @@ class Thumbnail(discord.ui.View):
     @discord.ui.button(label="render Score", style=discord.ButtonStyle.primary, emoji="🖕")
     async def button_callback(self, button: discord.Button, interaction: discord.Interaction):
         error = ''
-        hasReplay: bool = await createAll(
+        hasReplay: bool = createAll(
             self.osu,
-            await self.osu.user(self.userId, mode=self.score.mode),
+            self.osu.user(self.userId, mode=self.score.mode),
             self.score,
             self.beatmap
         )
@@ -52,4 +52,4 @@ class Thumbnail(discord.ui.View):
         title: str = open(f'data/output/{self.score.best_id}Title', 'r').read().replace('#star#', '⭐')
 
         await interaction.message.reply(f'{error}title:\n```{title}```\ndescription:\n```{description}```', files=files)
-        cleanup(self.score.best_id)
+        await cleanup(self.score.best_id)

@@ -42,8 +42,8 @@ class SkinCommands(commands.Cog):
                               default=False),  # noqa
 
     ):
-        await ctx.response.defer()
-        osuUser = await self.osuUserHelper.getOsuUser(user, createIfNone=False, forceById=forcebyuserid)
+        self.bot.loop.create_task(ctx.response.defer())
+        osuUser = self.osuUserHelper.getOsuUser(user, createIfNone=False, forceById=forcebyuserid)
 
         if osuUser is None or osuUser.skin is None:
             await ctx.respond('user has no skin saved')
@@ -73,8 +73,8 @@ class SkinCommands(commands.Cog):
             skinfile: Option(discord.Attachment, description='add the replay file'),  # noqa
             forcebyuserid: Option(bool, description='It will skip the search via username and will find by userid: default checks for both.', default=False),  # noqa
     ):
-        await ctx.response.defer()
-        osuUser = await self.osuUserHelper.getOsuUser(user, createIfNone=True, forceById=forcebyuserid)
+        self.bot.loop.create_task(ctx.response.defer())
+        osuUser = self.osuUserHelper.getOsuUser(user, createIfNone=True, forceById=forcebyuserid)
         skinfile: discord.Attachment
         data = await skinfile.read()
         hash = hashlib.sha256(data).hexdigest()
@@ -124,8 +124,8 @@ class SkinCommands(commands.Cog):
             user: Option(str, description='userID or username'),  # noqa
             forcebyuserid: Option(bool, description='It will skip the search via username and will find by userid: default checks for both.', default=False),  # noqa
     ):
-        await ctx.response.defer()
-        osuUser = await self.osuUserHelper.getOsuUser(user, createIfNone=True, forceById=forcebyuserid)
+        self.bot.loop.create_task(ctx.response.defer())
+        osuUser = self.osuUserHelper.getOsuUser(user, createIfNone=True, forceById=forcebyuserid)
 
         if osuUser is None:
             await ctx.respond('username or userid ```' + user + '``` doesnt exist!')
