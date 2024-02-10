@@ -24,7 +24,7 @@ class MentionCommands(commands.Cog):
         self.validator = validator
         self.guildHelper = guildHelper
 
-    async def memberListEmbed(
+    def memberListEmbed(
             self,
             guild: discord.Guild,
             gamemode: ossapi.GameMode,
@@ -136,6 +136,6 @@ class MentionCommands(commands.Cog):
 
         mentionList = self.guildHelper.getMentionForScores(guild, gamemode)
 
-        embed = await self.memberListEmbed(ctx.guild, gamemode, mentionList)
+        embed = self.memberListEmbed(ctx.guild, gamemode, mentionList)
 
         await ctx.response.send_message(embed=embed)

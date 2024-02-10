@@ -17,7 +17,7 @@ class OsuUserHelper:
         self.om = om
         self.validator = validator
 
-    async def getOsuUser(self, usernameOrID: str | int, *, createIfNone: bool = False, forceById: bool = False) -> OsuUser | None:
+    def getOsuUser(self, usernameOrID: str | int, *, createIfNone: bool = False, forceById: bool = False) -> OsuUser | None:
         osuUser = None
         if not forceById:
             osuUser = self.om.getOneBy(OsuUser, OsuUser.username, usernameOrID)
@@ -31,7 +31,7 @@ class OsuUserHelper:
             pass
 
         if osuUser is None and createIfNone:
-            user = await self.osuHandler.getUserFromAPI(usernameOrID, forceById=forceById)
+            user = self.osuHandler.getUserFromAPI(usernameOrID, forceById=forceById)
             if user is None:
                 return None
 

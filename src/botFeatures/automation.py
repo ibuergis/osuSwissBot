@@ -26,7 +26,7 @@ class Automation(commands.Cog):
     @tasks.loop(hours=12)
     async def updateUsers(self):
         print(f"[{datetime.now()}]", 'updating users...')
-        await self.__osuHandler.updateUsers()
+        self.__osuHandler.updateUsers()
         if not self.__usersUpdated:
             self.getScores.start()
             self.__usersUpdated = True
@@ -40,18 +40,18 @@ class Automation(commands.Cog):
         rankRange = [standardNumber, 51 - standardNumber]
         strRankRange = [str(standardNumber), str(51 - standardNumber)]
         print(f"[{datetime.now()}]", 'updating standard players: ' + ", ".join(strRankRange))
-        await self.__osuHandler.getRecentPlays(self.__bot, GameMode.OSU, rankRange)
+        self.__osuHandler.getRecentPlays(self.__bot, GameMode.OSU, rankRange)
         print(f"[{datetime.now()}]", 'finished updating standard players')
 
         rankRange = [self.__getScoresLoop % 10 + 1]
         strRankRange = [str(self.__getScoresLoop % 10 + 1)]
         print(f"[{datetime.now()}]", 'updating catch players: ' + ", ".join(strRankRange))
-        await self.__osuHandler.getRecentPlays(self.__bot, GameMode.CATCH, rankRange)
+        self.__osuHandler.getRecentPlays(self.__bot, GameMode.CATCH, rankRange)
         print(f"[{datetime.now()}]", 'finished updating catch players')
 
         rankRange = [self.__getScoresLoop % 10 + 1]
         strRankRange = [str(self.__getScoresLoop % 10 + 1)]
         print(f"[{datetime.now()}]", 'updating taiko players: ' + ", ".join(strRankRange))
-        await self.__osuHandler.getRecentPlays(self.__bot, GameMode.TAIKO, rankRange)
+        self.__osuHandler.getRecentPlays(self.__bot, GameMode.TAIKO, rankRange)
         print(f"[{datetime.now()}]", 'finished updating taiko players')
         self.__getScoresLoop = (self.__getScoresLoop + 1) % 50

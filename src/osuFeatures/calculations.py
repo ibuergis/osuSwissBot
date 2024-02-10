@@ -4,7 +4,7 @@ from ossapi.enums import Grade
 import requests
 
 
-async def calculateScoreViaApi(
+def calculateScoreViaApi(
         mapId: int, *,
         s100: int = 0,
         s50: int = 0,
@@ -30,7 +30,7 @@ async def calculateScoreViaApi(
 
     return requests.patch(link, json=request).json()
 
-async def gradeCalculator(n300: int = 0, n100: int = 0, n50: int = 0, miss: int = 0) -> str:
+def gradeCalculator(n300: int = 0, n100: int = 0, n50: int = 0, miss: int = 0) -> str:
     objectCount = n300 + n100 + n50 + miss
 
     if objectCount == n300:
@@ -45,7 +45,7 @@ async def gradeCalculator(n300: int = 0, n100: int = 0, n50: int = 0, miss: int 
         return 'C'
     return 'D'
 
-async def gradeConverter(grade: str, mods: ossapi.Mod) -> Grade:
+def gradeConverter(grade: str, mods: ossapi.Mod) -> Grade:
 
     special = 'HD' in mods.short_name() or 'FL' in mods.short_name()
 
