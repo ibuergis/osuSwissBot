@@ -1,4 +1,3 @@
-import asyncio
 from msilib.schema import File
 from typing import Any
 
