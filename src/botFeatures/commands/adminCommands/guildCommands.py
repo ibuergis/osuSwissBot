@@ -49,7 +49,7 @@ class GuildCommands(commands.Cog):
         except KeyError:
             raise ValueError("Invalid gamemode")
 
-        guild.__setattr__(gamemode.value + 'ScoresChannel', channelid)
+        guild.__setattr__(gamemode.name.lower() + 'ScoresChannel', channelid)
 
-        await ctx.response.send_message('set Score channel for ' + gamemode.value + ' to ' + channel.mention)
+        await ctx.response.send_message('set Score channel for ' + gamemode.name.lower() + ' to ' + channel.mention)
         self.om.flush()

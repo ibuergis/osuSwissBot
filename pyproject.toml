@@ -10,7 +10,7 @@ readme = "README.md"
 dependencies = [
     "pillow ~= 10.1",
     "discord.py ~= 2.3",
-    "ossapi ~= 3.4",
+    "ossapi == v4.0.0b1",
     "sqlalchemy ~= 2.0",
     "py-cord ~= 2.4",
     "pymysql ~= 1.1",

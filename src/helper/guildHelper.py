@@ -18,7 +18,7 @@ class GuildHelper:
 
         self.validator.isGamemode(gamemode, throw=True)
 
-        guild.__setattr__(gamemode.value + 'ScoresChannel', channelId)
+        guild.__setattr__(gamemode.name.lower() + 'ScoresChannel', channelId)
         return True
 
     def removeScoresChannel(self, guild: Guild, gamemode: ossapi.GameMode):
@@ -27,7 +27,7 @@ class GuildHelper:
 
         self.validator.isGamemode(gamemode, throw=True)
 
-        guild.__setattr__(gamemode.value + 'ScoresChannel', None)
+        guild.__setattr__(gamemode.name.lower() + 'ScoresChannel', None)
         return True
 
     def getScoresChannel(self, guild: Guild, gamemode: ossapi.GameMode):
@@ -36,7 +36,7 @@ class GuildHelper:
 
         self.validator.isGamemode(gamemode, throw=True)
 
-        return guild.__getattribute__(gamemode.value + 'ScoresChannel')
+        return guild.__getattribute__(gamemode.name.lower() + 'ScoresChannel')
 
     def addMentionForScores(self, guild: Guild, discordUser: DiscordUser, gamemode: ossapi.GameMode):
         if type(guild) is not Guild:
@@ -47,10 +47,10 @@ class GuildHelper:
 
         self.validator.isGamemode(gamemode, throw=True)
 
-        if discordUser in guild.__getattribute__(gamemode.value + 'MentionOnTopPlay'):
+        if discordUser in guild.__getattribute__(gamemode.name.lower() + 'MentionOnTopPlay'):
             return True
 
-        guild.__getattribute__(gamemode.value + 'MentionOnTopPlay').append(discordUser)
+        guild.__getattribute__(gamemode.name.lower() + 'MentionOnTopPlay').append(discordUser)
         return True
 
     def removeMentionForScores(self, guild: Guild, discordUser: DiscordUser, gamemode: ossapi.GameMode):
@@ -62,10 +62,10 @@ class GuildHelper:
 
         self.validator.isGamemode(gamemode, throw=True)
 
-        if discordUser not in guild.__getattribute__(gamemode.value + 'MentionOnTopPlay'):
+        if discordUser not in guild.__getattribute__(gamemode.name.lower() + 'MentionOnTopPlay'):
             return True
 
-        guild.__getattribute__(gamemode.value + 'MentionOnTopPlay').remove(discordUser)
+        guild.__getattribute__(gamemode.name.lower() + 'MentionOnTopPlay').remove(discordUser)
         return True
 
     def getMentionForScores(self, guild: Guild, gamemode: ossapi.GameMode):
@@ -74,4 +74,4 @@ class GuildHelper:
 
         self.validator.isGamemode(gamemode, throw=True)
 
-        return guild.__getattribute__(gamemode.value + 'MentionOnTopPlay')
+        return guild.__getattribute__(gamemode.name.lower() + 'MentionOnTopPlay')

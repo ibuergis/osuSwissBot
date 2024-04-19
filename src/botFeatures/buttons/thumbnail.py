@@ -39,17 +39,17 @@ class Thumbnail(discord.ui.View):
             self.beatmap
         )
 
-        thumbnail: discord.File = discord.File(f'data/output/{self.score.best_id}.jpg')
+        thumbnail: discord.File = discord.File(f'data/output/{self.score.id}.jpg')
 
         if hasReplay:
-            replay = discord.File(f'data/output/{self.score.best_id}.osr')
+            replay = discord.File(f'data/output/{self.score.id}.osr')
             files = [thumbnail, replay]
         else:
             error = "**Score has no replay on the website**\n\n"
             files = [thumbnail]
 
-        description: str = open(f'data/output/{self.score.best_id}Description', 'r').read()
-        title: str = open(f'data/output/{self.score.best_id}Title', 'r').read().replace('#star#', '⭐')
+        description: str = open(f'data/output/{self.score.id}Description', 'r').read()
+        title: str = open(f'data/output/{self.score.id}Title', 'r').read().replace('#star#', '⭐')
 
         await interaction.message.reply(f'{error}title:\n```{title}```\ndescription:\n```{description}```', files=files)
-        await cleanup(self.score.best_id)
+        await cleanup(self.score.id)
