@@ -32,7 +32,7 @@ class MentionCommands(commands.Cog):
     ) -> discord.Embed:
         embed: discord.Embed = discord.Embed(colour=16007990)
         embed.set_author(
-            name=f'Mention list for {gamemode.value}',
+            name=f'Mention list for {gamemode.name.lower()}',
         )
 
         if not mentionList:
@@ -76,7 +76,9 @@ class MentionCommands(commands.Cog):
 
         self.guildHelper.addMentionForScores(guild, discordUser, gamemode)
 
-        await ctx.response.send_message('user ' + member.mention + ' added to the ' + gamemode.value + ' scores mention list.')
+        await ctx.response.send_message(
+            'user ' + member.mention + ' added to the ' + gamemode.name.lower() + ' scores mention list.'
+        )
         self.om.flush()
 
     @commands.slash_command(description="remove a user from the mention list")
@@ -111,7 +113,7 @@ class MentionCommands(commands.Cog):
 
         self.guildHelper.removeMentionForScores(guild, discordUser, gamemode)
 
-        await ctx.response.send_message('user ' + member.mention + ' removed from the ' + gamemode.value + ' scores mention list.') # noqa
+        await ctx.response.send_message('user ' + member.mention + ' removed from the ' + gamemode.name.lower() + ' scores mention list.') # noqa
         self.om.flush()
 
     @commands.slash_command(description="show the mention list")

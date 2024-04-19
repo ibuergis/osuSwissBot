@@ -65,7 +65,7 @@ def createScoreEmbed(osuUser: OsuUser, score: ossapi.Score, beatmap: ossapi.Beat
     beatmapset = beatmap.beatmapset()
     embed.set_author(
         name=f'Score done by {osuUser.username}',
-        url=f'https://osu.ppy.sh/scores/{score.mode.value}/{score.best_id}'
+        url=f'https://osu.ppy.sh/scores/{score.mode.value}/{score.id}'
 
     )
     embed.title = f'{beatmapset.artist} - {beatmapset.title} [{beatmap.version}]'
@@ -212,8 +212,8 @@ class OsuHandler:
 
     def updateUsers(self):
         usersFromApi: list[UserStatistics] = self.getUsersFromAPI(2, GameMode.OSU, 'ch')
-        taikousersFromApi: list[UserStatistics] = self.getUsersFromAPI(1, GameMode.TAIKO, 'ch')
-        catchusersFromApi: list[UserStatistics] = self.getUsersFromAPI(1, GameMode.CATCH, 'ch')
+        taikoUsersFromApi: list[UserStatistics] = self.getUsersFromAPI(1, GameMode.TAIKO, 'ch')
+        catchUsersFromApi: list[UserStatistics] = self.getUsersFromAPI(1, GameMode.CATCH, 'ch')
 
         currentRank = 0
         for userFromApi in usersFromApi:
@@ -232,7 +232,7 @@ class OsuHandler:
                 osuUser.osuRank = currentRank
 
         currentRank = 0
-        for taikouserFromApi in taikousersFromApi:
+        for taikouserFromApi in taikoUsersFromApi:
             osuUser: OsuUser = self.__om.get(OsuUser, taikouserFromApi.user.id)
             currentRank += 1
             if osuUser is None:
@@ -248,7 +248,7 @@ class OsuHandler:
                 osuUser.taikoRank = currentRank
 
         currentRank = 0
-        for catchuserFromApi in catchusersFromApi:
+        for catchuserFromApi in catchUsersFromApi:
             osuUser: OsuUser = self.__om.get(OsuUser, catchuserFromApi.user.id)
             currentRank += 1
             if osuUser is None:
@@ -269,14 +269,11 @@ class OsuHandler:
             self,
             scoreId: int,
             description: str = '',
-            shortenTitle: bool = False,
-            gamemode: ossapi.GameMode = ossapi.GameMode.OSU
+            shortenTitle: bool = False
     ) -> bool | None:
-
-        self.__validator.isGamemode(gamemode, throw=True)
-
         try:
-            score: ossapi.Score = self.__osu.score(gamemode, scoreId)
+            score: ossapi.Score = self.__osu.score(scoreId)
+            score.id = scoreId
         except ValueError:
             return None
 
@@ -295,8 +292,7 @@ class OsuHandler:
             self,
             ctx,
             file: File, description:
-            str = '', shortenTitle: bool = False,
-            gamemode: str = 'osu'
+            str = '', shortenTitle: bool = False
     ) -> ossapi.Score:
 
         file.save(f'data/output/{ctx.author.id}.osr')
@@ -315,7 +311,7 @@ class OsuHandler:
 
         score = ossapi.Score()
         score.pp = calculated['local_pp']
-        score.best_id = ctx.author.id if replay.replay_id is None else replay.replay_id
+        score.id = ctx.author.id if replay.replay_id is None else replay.replay_id
         score.max_combo = replay.max_combo
         score.accuracy = calculated['accuracy'] / 100
         score.mods = replay.mods

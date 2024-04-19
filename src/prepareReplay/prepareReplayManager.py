@@ -51,19 +51,19 @@ def add_corners(im: Image, rad: int) -> Image:
 def createThumbnail(user: User, score: Score, beatmap: Beatmap, description: str = '', shortenTitle: bool = False):
     beatmapset = beatmap.beatmapset()
 
-    with open(f'data/temp/{score.best_id}.jpg', 'wb+') as f:
+    with open(f'data/temp/{score.id}.jpg', 'wb+') as f:
         cover = requests.get(
             f'https://assets.ppy.sh/beatmaps/{beatmap.beatmapset_id}/covers/card@2x.jpg?1650700167').content
         f.write(cover)
         f.close()
 
-    with open(f'data/temp/{score.best_id}.png', 'wb+') as f:
+    with open(f'data/temp/{score.id}.png', 'wb+') as f:
         cover = requests.get(f'https://a.ppy.sh/{user.id}?1692642160.jpeg').content
         f.write(cover)
         f.close()
 
     template = Image.open('data/templates/main.png', 'r').convert('RGBA')
-    thumbnail = Image.open(f'data/temp/{score.best_id}.jpg')
+    thumbnail = Image.open(f'data/temp/{score.id}.jpg')
     enhancer = ImageEnhance.Brightness(thumbnail)
     thumbnail = enhancer.enhance(0.5)
     thumbnail = thumbnail.crop((130, 0, 670, 280))
@@ -80,7 +80,7 @@ def createThumbnail(user: User, score: Score, beatmap: Beatmap, description: str
 
     thumbnail.paste(template, (0, 0), template)
 
-    pfp = Image.open(f'data/temp/{score.best_id}.png').resize((300, 300)).convert('RGBA')
+    pfp = Image.open(f'data/temp/{score.id}.png').resize((300, 300)).convert('RGBA')
     pfp = add_corners(pfp, 85)
     thumbnail.paste(pfp, (812, 443), pfp)
 
@@ -143,14 +143,14 @@ def createThumbnail(user: User, score: Score, beatmap: Beatmap, description: str
 
     thumbnail.paste(rank, (490, 450), rank)
 
-    thumbnail.save(f'data/output/{score.best_id}.jpg')
+    thumbnail.save(f'data/output/{score.id}.jpg')
 
 
 def createTitle(osu: ossapi.Ossapi, user: User, score: Score, beatmap: Beatmap, shortenTitle: bool = False):
     beatmapset = beatmap.beatmapset()
     songTitle = shortenSongTitle(beatmapset.title) if shortenTitle else beatmapset.title
     detailed: DifficultyAttributes = osu.beatmap_attributes(beatmap.id, mods=score.mods)
-    title = open(f'data/output/{score.best_id}Title', 'w+')
+    title = open(f'data/output/{score.id}Title', 'w+')
     songInfo = f"{beatmapset.artist} - {songTitle}"
     mapInfo = f"[{beatmap.version}] {round(detailed.attributes.star_rating, 2)}#star# +{score.mods.short_name()}"
     title.write(f'{user.username} | {songInfo}{mapInfo}')
@@ -158,12 +158,12 @@ def createTitle(osu: ossapi.Ossapi, user: User, score: Score, beatmap: Beatmap, 
 
 
 def createDescription(user: User, score: Score, beatmap: Beatmap):
-    scoreLink = f'https://osu.ppy.sh/scores/{score.mode.value}/{score.best_id}'
+    scoreLink = f'https://osu.ppy.sh/scores/{score.mode.value}/{score.id}'
     page = requests.get(scoreLink).text.replace('\n', '')
     if re.match('.*Page Missing.*', page):
         scoreLink = 'not on the website'
 
-    description = open(f'data/output/{score.best_id}Description', 'w+')
+    description = open(f'data/output/{score.id}Description', 'w+')
     description.write(
         f"This score was set on {score.created_at.strftime('%d.%m.%Y at %H:%M')}.\n"
         f"\n"
@@ -178,8 +178,8 @@ def createDescription(user: User, score: Score, beatmap: Beatmap):
 
 def createReplayFile(osu: ossapi.Ossapi, score: Score, gamemode: ossapi.GameMode = ossapi.GameMode.OSU) -> bool:
     try:
-        replay = osu.download_score(gamemode, score.best_id, raw=True)
-        with open(f'data/output/{score.best_id}.osr', 'wb+') as f:
+        replay = osu.download_score(score.id, raw=True)
+        with open(f'data/output/{score.id}.osr', 'wb+') as f:
             f.write(replay)
             f.close()
             return True

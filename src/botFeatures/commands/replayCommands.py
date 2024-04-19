@@ -1,5 +1,4 @@
 import discord
-import ossapi
 from discord import Option
 from discord.ext import commands
 
@@ -24,20 +23,18 @@ class ReplayCommands(commands.Cog):
             scoreid: Option(int, description='add the id of the score'), # noqa
             description: Option(str, description='a small text inside the thumbnail', default=''), # noqa
             shortentitle: Option(bool, description='removes the featured artists in the title', default=False), # noqa
-            gamemode: Option(str, choices=['osu', 'mania', 'taiko', 'catch'], description='the gamemode to pick', default='osu'), # noqa
     ):
 
-        gamemode = ossapi.GameMode.__getattribute__(ossapi.GameMode, gamemode.upper())
         channel = self.bot.get_channel(ctx.channel_id)
 
         self.bot.loop.create_task(ctx.respond('replay is being prepared'))
         files = []
-        response = self.osuHandler.prepareReplay(scoreid, description, shortentitle, gamemode)
+        response = self.osuHandler.prepareReplay(scoreid, description, shortentitle)
 
         if response is None:
             await channel.send('**Score does not exist!**')
         else:
-            if self.osuHandler.prepareReplay(scoreid, description, shortentitle, gamemode):
+            if self.osuHandler.prepareReplay(scoreid, description, shortentitle):
                 error = ''
                 files.append(discord.File(f'data/output/{scoreid}.osr'))
             else:
@@ -48,7 +45,7 @@ class ReplayCommands(commands.Cog):
             title = open(f'data/output/{scoreid}Title', 'r').read().replace('#star#', '⭐')
 
             await channel.send(f'{error}title:\n```{title}```\ndescription:\n```{description}```', files=files)
-            cleanup(scoreid)
+            await cleanup(scoreid)
 
     @commands.slash_command(description="Render a thumbnail with a replay file")
     async def preparereplayfromfile(
@@ -63,9 +60,9 @@ class ReplayCommands(commands.Cog):
         self.bot.loop.create_task(ctx.respond('replay is being prepared'))
 
         score = self.osuHandler.prepareReplayFromFile(ctx, replayfile, description, shortentitle)
-        files = [await replayfile.to_file(), discord.File(f'data/output/{score.best_id}.jpg')]
-        description = open(f'data/output/{score.best_id}Description', 'r').read()
-        title = open(f'data/output/{score.best_id}Title', 'r').read().replace('#star#', '⭐')
+        files = [await replayfile.to_file(), discord.File(f'data/output/{score.id}.jpg')]
+        description = open(f'data/output/{score.id}Description', 'r').read()
+        title = open(f'data/output/{score.id}Title', 'r').read().replace('#star#', '⭐')
 
         await channel.send(f'title:\n```{title}```\ndescription:\n```{description}```', files=files)
-        cleanup(score.best_id)
+        await cleanup(score.id)
