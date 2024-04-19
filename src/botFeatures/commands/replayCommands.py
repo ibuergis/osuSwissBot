@@ -1,5 +1,4 @@
 import discord
-import ossapi
 from discord import Option
 from discord.ext import commands
 
