@@ -158,7 +158,7 @@ def createTitle(osu: ossapi.Ossapi, user: User, score: Score, beatmap: Beatmap, 
 
 
 def createDescription(user: User, score: Score, beatmap: Beatmap):
-    scoreLink = f'https://osu.ppy.sh/scores/{score.mode.value}/{score.id}'
+    scoreLink = f'https://osu.ppy.sh/scores/{score.id}'
     page = requests.get(scoreLink).text.replace('\n', '')
     if re.match('.*Page Missing.*', page):
         scoreLink = 'not on the website'
