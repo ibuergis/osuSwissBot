@@ -1,3 +1,6 @@
+# THIS IS OUTDATED!!!
+
+
 # Setup the bot
 ***
 Here I will explain everything needed for the bot
