@@ -1,13 +1,13 @@
 from ossapi.models import NonLegacyMod, Mod
 
-def handleModToString(mods: str|Mod|list[NonLegacyMod]):
+def handleModToString(mods: str | Mod | list[NonLegacyMod]):
     print(mods)
     if (not isinstance(mods, str)):
         if isinstance(mods, Mod):
             mods = legacyModToString(mods)
-        elif (all(map(lambda mod: isinstance(mod,NonLegacyMod), mods))):
+        elif (all(map(lambda mod: isinstance(mod, NonLegacyMod), mods))):
             mods = nonLegacyModToString(mods)
-    
+
     return mods
 
 def nonLegacyModToString(mods: list[NonLegacyMod]):
@@ -22,7 +22,7 @@ def legacyModToString(mods: Mod):
     if mod == 'NM':
         mod = ''
     return mod
-    
+
 def modStringToList(mods: str) -> list[str]:
     n = 2
     return [mods[i:i + n] for i in range(0, len(mods), n)]

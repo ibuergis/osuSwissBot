@@ -119,7 +119,7 @@ def createThumbnail(user: User, score: Score, beatmap: Beatmap, description: str
 
     x = (thumbnail.width - getTextLength(getFont(70), description)) // 2
     drawer.text((x, 880), description, font=getFont(70), fill=(255, 255, 255))
-    
+
     mods = modStringToList(handleModToString(score.mods))
 
     pp = None if score.pp is None else f"{int(score.pp)}pp"
@@ -150,7 +150,6 @@ def createTitle(osu: ossapi.Ossapi, user: User, score: Score, beatmap: Beatmap, 
     beatmapset = beatmap.beatmapset()
     songTitle = shortenSongTitle(beatmapset.title) if shortenTitle else beatmapset.title
     modString = handleModToString(score.mods)
-    mods = modStringToList(modString)
     detailed: DifficultyAttributes = osu.beatmap_attributes(beatmap.id, mods=modString.replace('V2', ''))
     title = open(f'data/output/{score.id}Title', 'w+')
     songInfo = f"{beatmapset.artist} - {songTitle}"

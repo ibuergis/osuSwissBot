@@ -24,7 +24,7 @@ def createScoreEmbed(player: Player, score: Score, beatmap: Beatmap, gamemode: o
     embed = Embed(colour=16007990)
     beatmapset = beatmap.beatmapset()
     embed.set_author(
-        name=f'Score done by {player['username']}',
+        name=f'Score done by ' + player['username'],
         url=f'https://osu.ppy.sh/scores/{score.beatmap.mode.value}/{score.id}'
 
     )

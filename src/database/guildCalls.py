@@ -1,4 +1,4 @@
-from firebase_admin import db
+from .firebase import init
 from typing import TypedDict
 
 class Guild(TypedDict):
@@ -6,19 +6,20 @@ class Guild(TypedDict):
     uploaders: list[int] = []
 
 
+db = init()
 database = db.reference('/').child('guild')
 
-def getFirstGuildBy(column: str, value: str) -> Guild|None:
+def getFirstGuildBy(column: str, value: str) -> Guild | None:
     player = getGuildsBy(column, value)
     print(player)
     if len(player) == 0:
         return None
     return player[0]
 
-def getGuildsBy(column: str, value: str) -> list[int: Guild]|None:
+def getGuildsBy(column: str, value: str) -> list[int: Guild] | None:
     return list(database.order_by_child(column).equal_to(value).get().values())
 
-def getGuild(userId: int) -> Guild|None:
+def getGuild(userId: int) -> Guild | None:
     return database.child(userId).get()
 
 def setGuild(content: Guild):

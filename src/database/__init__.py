@@ -1,6 +1,3 @@
 from .firebase import init
-
-init()
-
-from .playerCalls import *
-from .guildCalls import *
+from .playerCalls import Player, getFirstPlayerBy, getPlayer, getPlayersBy, setPlayer
+from .guildCalls import Guild, getFirstGuildBy, getGuild, getGuildsBy, setGuild
