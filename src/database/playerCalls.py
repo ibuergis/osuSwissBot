@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 from .firebase import init
+=======
+from .firebase import *
+>>>>>>> 912e2452f6860869f8f621e1d167a1fbd617d4cd
 from typing import TypedDict
 
 class Player(TypedDict):
@@ -6,7 +10,10 @@ class Player(TypedDict):
     userId: int
     skin: str | None = None
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 912e2452f6860869f8f621e1d167a1fbd617d4cd
 db = init()
 
 database = db.reference('/').child('player')
