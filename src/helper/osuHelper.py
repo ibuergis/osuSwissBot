@@ -1,11 +1,11 @@
 from ossapi.models import NonLegacyMod, Mod
 
-def handleModToString(mods: str|Mod|list[NonLegacyMod]):
+def handleModToString(mods: str | Mod | list[NonLegacyMod]):
     print(mods)
     if (not isinstance(mods, str)):
         if isinstance(mods, Mod):
             mods = legacyModToString(mods)
-        elif (all(map(lambda mod: isinstance(mod,NonLegacyMod), mods))):
+        elif (all(map((lambda mod: isinstance(mod,NonLegacyMod)), mods))):
             mods = nonLegacyModToString(mods)
     
     return mods

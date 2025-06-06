@@ -1,5 +1,3 @@
-import os
-
 import discord
 from discord.ext import commands
 from discord import option
@@ -37,7 +35,6 @@ class SkinCommands(commands.Cog):
         user: str,
         forcebyuserid: bool = False
     ):
-        
         self.bot.loop.create_task(ctx.response.defer())
         player = self.osuUserHelper.getOsuUser(user, createIfNone=False, forceById=forcebyuserid)
 
@@ -46,11 +43,14 @@ class SkinCommands(commands.Cog):
         else:
             await ctx.respond(f"skin: {player['skin']}")
 
-
     @commandGroup.command(description="add a skin to a player")
     @option('user', str, description='userID or username')
     @option('skinlink', str, description='link to the skin')
-    @option('forcebyuserid', bool, description='It will skip the search via username and will find by userid: default checks for both.', default=False)
+    @option(
+        'forcebyuserid', bool,
+        description='It will skip the search via username and will find by userid: default checks for both.',
+        default=False
+    )
     async def add(
             self,
             ctx: discord.ApplicationContext,
@@ -70,7 +70,12 @@ class SkinCommands(commands.Cog):
 
     @commandGroup.command(description="remove a skin from a player")
     @option('user', str, description='userID or username')
-    @option('forcebyuserid', bool, description='It will skip the search via username and will find by userid: default checks for both.', default=False)
+    @option(
+        'forcebyuserid',
+        bool,
+        description='It will skip the search via username and will find by userid: default checks for both.',
+        default=False
+    )
     async def remove(
             self,
             ctx: discord.ApplicationContext,

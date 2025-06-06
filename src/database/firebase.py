@@ -12,3 +12,5 @@ def init() -> db:
     firebase_admin.initialize_app(cred_obj, {'databaseURL': config['firebase']})
 
     return db
+
+init()

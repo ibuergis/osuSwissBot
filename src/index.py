@@ -2,13 +2,12 @@ import json
 
 import discord
 from discord.ext import commands
-
+from database.firebase import init
 from botFeatures.commands.adminCommands.skinCommands import SkinCommands
 from botFeatures.commands.miscCommands import MiscCommands
 from botFeatures.commands.replayCommands import ReplayCommands
 from helper.osuUserHelper import OsuUserHelper
 from osuFeatures.osuHandler import OsuHandler
-from botFeatures.automation import Automation
 from botFeatures.commands.funCommands import FunCommands
 from botFeatures.emojis import Emojis
 from helper import Validator
@@ -36,12 +35,13 @@ def main():
     bot.add_cog(MiscCommands(bot))
     bot.add_cog(SkinCommands(bot, validator, osuUserHelper))
 
+    init()
+
     @bot.event
     async def on_ready():
         global funCommands
         global emojis
         global loaded
-    
         if not loaded:
             emojis = Emojis(bot)
             funCommands = FunCommands(bot, emojis)
@@ -49,11 +49,10 @@ def main():
             # bot.add_cog(automation)
             loaded = True
         print(f'{bot.user.name} has connected to Discord!')
-    
+
     @bot.event
     async def on_message(ctx: discord.Message):
         if funCommands is not None:
             bot.loop.create_task(funCommands.checkForEasterEgg(ctx, ctx.content))
-    
+
     bot.run(config['botToken'])
-    
