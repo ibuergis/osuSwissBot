@@ -57,7 +57,7 @@ class OsuHandler:
     def __init__(self, config: dict, validator: Validator):
         self.__validator = validator
         self.__osu = Ossapi(int(config['clientId']),
-                            config['clientSecret'], 'http://localhost:3914/', ['public', 'identify'],
+                            config['clientSecret'], 'http://localhost:' + config['callbackPort'] + '/', ['public', 'identify'],
                             grant="authorization")
 
     def getUserFromAPI(self, usernameOrId: str | int, *, forceById: bool = False) -> ossapi.User:

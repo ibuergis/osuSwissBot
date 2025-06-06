@@ -3,5 +3,6 @@
   "firebase": "",
   "clientId": "",
   "clientSecret": "",
-  "checkRecentPlays": true
+  "checkRecentPlays": true,
+  "callbackPort": "3914"
 }
