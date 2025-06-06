@@ -12,9 +12,3 @@ def init() -> db:
     firebase_admin.initialize_app(cred_obj, {'databaseURL': config['firebase']})
 
     return db
-
-<<<<<<< HEAD
-
-=======
->>>>>>> 912e2452f6860869f8f621e1d167a1fbd617d4cd
-init()
