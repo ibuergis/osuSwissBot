@@ -33,7 +33,7 @@ def createScoreEmbed(player: Player, score: Score, beatmap: Beatmap, gamemode: o
     embed.set_image(
         url=f'https://assets.ppy.sh/beatmaps/{beatmap.beatmapset_id}/covers/cover.jpg?1650602952')
 
-    embed.set_thumbnail(url=f'https://a.ppy.sh/{player['userId']}?1692642160')
+    embed.set_thumbnail(url=f'https://a.ppy.sh/' + player['userId'] + '?1692642160')
     embed.add_field(name='Score:', value=f"{score.score:,}")
     embed.add_field(name='Accuracy:', value=f"{str(int(score.accuracy * 10000) / 100)}%")
     embed.add_field(name='Hits:',

@@ -5,7 +5,6 @@ class Guild(TypedDict):
     guildId: int
     uploaders: list[int] = []
 
-db = init()
 
 db = init()
 database = db.reference('/').child('guild')
