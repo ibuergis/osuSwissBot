@@ -4,7 +4,7 @@ import osrparse
 from discord import Embed
 
 import ossapi
-from ossapi import Ossapi, GameMode, RankingType, Replay, Mod, Score, Beatmap
+from ossapi import Ossapi, GameMode, RankingType, Replay, Score, Beatmap
 
 import os
 
@@ -24,7 +24,7 @@ def createScoreEmbed(player: Player, score: Score, beatmap: Beatmap, gamemode: o
     embed = Embed(colour=16007990)
     beatmapset = beatmap.beatmapset()
     embed.set_author(
-        name=f'Score done by ' + player['username'],
+        name='Score done by ' + player['username'],
         url=f'https://osu.ppy.sh/scores/{score.beatmap.mode.value}/{score.id}'
 
     )
@@ -33,7 +33,7 @@ def createScoreEmbed(player: Player, score: Score, beatmap: Beatmap, gamemode: o
     embed.set_image(
         url=f'https://assets.ppy.sh/beatmaps/{beatmap.beatmapset_id}/covers/cover.jpg?1650602952')
 
-    embed.set_thumbnail(url=f'https://a.ppy.sh/' + player['userId'] + '?1692642160')
+    embed.set_thumbnail(url='https://a.ppy.sh/' + player['userId'] + '?1692642160')
     embed.add_field(name='Score:', value=f"{score.score:,}")
     embed.add_field(name='Accuracy:', value=f"{str(int(score.accuracy * 10000) / 100)}%")
     embed.add_field(name='Hits:',
@@ -112,8 +112,9 @@ class OsuHandler:
     async def prepareReplayFromFile(
             self,
             ctx,
-            file: discord.Attachment, description:
-            str = '', shortenTitle: bool = False
+            file: discord.Attachment,
+            description: str = '',
+            shortenTitle: bool = False
     ) -> ossapi.Score:
 
         await file.save(f'data/output/{ctx.author.id}.osr')
@@ -127,13 +128,13 @@ class OsuHandler:
 
         mods = modStringToList(handleModToString(replay.mods))
         calculated = calculateScoreViaApi(
-            beatmap.id, 
-            s100=replay.count_100, 
+            beatmap.id,
+            s100=replay.count_100,
             s50=replay.count_50,
             miss=replay.count_miss,
             mods=mods,
-            combo=replay.max_combo
-            )
+            combo=replay.max_combo,
+        )
         grade = gradeCalculator(replay.count_300, replay.count_100, replay.count_50, replay.count_miss)
 
         score = ossapi.Score()

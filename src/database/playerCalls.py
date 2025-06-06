@@ -6,6 +6,7 @@ class Player(TypedDict):
     userId: int
     skin: str | None = None
 
+
 db = init()
 
 database = db.reference('/').child('player')
