@@ -16,23 +16,3 @@ dependencies = [
     "osrparse ~= 6.0",
     "firebase-admin ~= 6.8.0"
 ]
-
-[project.optional-dependencies]
-tests = [
-    "Pylama[toml] ~= 8.4"
-]
-
-[tool.pylama]
-format = "pylint"
-skip = "venv/*,build/*"
-
-[tool.pylama.linter.pycodestyle]
-max_line_length = 130
-ignore = "E302"
-
-[tool.pylama.linter.pyflakes]
-ignore = "E0602"
-
-[[tool.pylama.files]]
-path = "*/__init__.py"
-ignore = "W0611"
