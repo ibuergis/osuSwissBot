@@ -3,6 +3,8 @@ import requests
 import os
 import re
 
+from src.helper.osuHelper import handleModToString, modStringToList
+
 import ossapi
 from ossapi import User, Score, Beatmap
 from ossapi.models import DifficultyAttributes
@@ -117,12 +119,8 @@ def createThumbnail(user: User, score: Score, beatmap: Beatmap, description: str
 
     x = (thumbnail.width - getTextLength(getFont(70), description)) // 2
     drawer.text((x, 880), description, font=getFont(70), fill=(255, 255, 255))
-
-    mod = score.mods.short_name()
-    if mod == 'NM':
-        mod = ''
-    n = 2
-    mods = [mod[i:i + n] for i in range(0, len(mod), n)]
+    
+    mods = modStringToList(handleModToString(score.mods))
 
     pp = None if score.pp is None else f"{int(score.pp)}pp"
 
@@ -134,6 +132,8 @@ def createThumbnail(user: User, score: Score, beatmap: Beatmap, description: str
 
     avg = len(mods) / 2
     for id in range(len(mods)):
+        if mods[id].lower() in ['cl', 'v2']:
+            continue
         mod = Image.open(f'data/mods/{mods[id].lower()}.png')
         thumbnail.paste(mod, (int(920 - 44 - 88 * (avg - id - 1)), 780), mod)
 
@@ -149,10 +149,12 @@ def createThumbnail(user: User, score: Score, beatmap: Beatmap, description: str
 def createTitle(osu: ossapi.Ossapi, user: User, score: Score, beatmap: Beatmap, shortenTitle: bool = False):
     beatmapset = beatmap.beatmapset()
     songTitle = shortenSongTitle(beatmapset.title) if shortenTitle else beatmapset.title
-    detailed: DifficultyAttributes = osu.beatmap_attributes(beatmap.id, mods=score.mods)
+    modString = handleModToString(score.mods)
+    mods = modStringToList(modString)
+    detailed: DifficultyAttributes = osu.beatmap_attributes(beatmap.id, mods=modString.replace('V2', ''))
     title = open(f'data/output/{score.id}Title', 'w+')
     songInfo = f"{beatmapset.artist} - {songTitle}"
-    mapInfo = f"[{beatmap.version}] {round(detailed.attributes.star_rating, 2)}#star# +{score.mods.short_name()}"
+    mapInfo = f"[{beatmap.version}] {round(detailed.attributes.star_rating, 2)}#star# +{modString}"
     title.write(f'{user.username} | {songInfo}{mapInfo}')
     title.close()
 
@@ -165,7 +167,7 @@ def createDescription(user: User, score: Score, beatmap: Beatmap):
 
     description = open(f'data/output/{score.id}Description', 'w+')
     description.write(
-        f"This score was set on {score.created_at.strftime('%d.%m.%Y at %H:%M')}.\n"
+        f"This score was set on {score.ended_at.strftime('%d.%m.%Y at %H:%M')}.\n"
         f"\n"
         f"Player: https://osu.ppy.sh/users/{user.id}\n"
         f"Beatmap: https://osu.ppy.sh/beatmaps/{beatmap.id}\n"
@@ -192,7 +194,7 @@ def createAll(osu: ossapi.Ossapi, user: User, score: Score, beatmap: Beatmap, de
     createThumbnail(user, score, beatmap, description, shortenTitle)
     createTitle(osu, user, score, beatmap, shortenTitle)
     createDescription(user, score, beatmap)
-    return createReplayFile(osu, score, score.mode)
+    return createReplayFile(osu, score, score.beatmap.mode)
 
 
 async def cleanup(scoreId: int):

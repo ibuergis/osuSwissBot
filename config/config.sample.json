@@ -1,9 +1,6 @@
 {
   "botToken": "",
-  "DBServer": "",
-  "DBName": "",
-  "DBUser": "",
-  "DBPassword": "",
+  "firebase": "",
   "clientId": "",
   "clientSecret": "",
   "checkRecentPlays": true

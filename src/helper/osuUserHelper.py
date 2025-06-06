@@ -1,44 +1,41 @@
-from ..database import ObjectManager
 from . import Validator
 from src.osuFeatures.osuHandler import OsuHandler
-from ..database.entities import OsuUser
-
+from src.database import getFirstPlayerBy, getPlayer, setPlayer, Player
 
 class OsuUserHelper:
 
     osuHandler: OsuHandler
 
-    om: ObjectManager
-
     validator: Validator
 
-    def __init__(self, osuHandler: OsuHandler, om: ObjectManager, validator: Validator):
+    def __init__(self, osuHandler: OsuHandler, validator: Validator):
         self.osuHandler = osuHandler
-        self.om = om
         self.validator = validator
 
-    def getOsuUser(self, usernameOrID: str | int, *, createIfNone: bool = False, forceById: bool = False) -> OsuUser | None:
-        osuUser = None
+    def getOsuUser(self, usernameOrID: str | int, *, createIfNone: bool = False, forceById: bool = False) -> Player | None:
+        player = None
         if not forceById:
-            osuUser = self.om.getOneBy(OsuUser, OsuUser.username, usernameOrID)
+            player: Player = getFirstPlayerBy('username', usernameOrID)
 
-        if osuUser is not None:
-            return osuUser
+        if player is not None:
+            return player
 
         try:
-            osuUser = self.om.get(ObjectManager, int(usernameOrID))
+            player: Player = getPlayer(int(usernameOrID))
         except ValueError:
             pass
 
-        if osuUser is None and createIfNone:
+        if player is None and createIfNone:
             user = self.osuHandler.getUserFromAPI(usernameOrID, forceById=forceById)
             if user is None:
                 return None
 
-            osuUser = OsuUser(id=user.id, username=user.username, country=user.country.code)
-            self.om.add(osuUser)
-            self.om.flush()
+            player = setPlayer({
+                'userId': user.id,
+                'username': user.username,
+                'skin': None
+            })
 
-            return osuUser
+            return player
 
-        return osuUser
+        return player

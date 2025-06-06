@@ -1,9 +1,0 @@
-CREATE TABLE skin (
-    id INT AUTO_INCREMENT UNIQUE,
-    hash VARCHAR(64) NOT NULL,
-    PRIMARY KEY (id)
-);
-
-ALTER TABLE osuUser
-    ADD COLUMN skin INT AFTER catchRank,
-    ADD FOREIGN KEY (skin) REFERENCES skin(id);

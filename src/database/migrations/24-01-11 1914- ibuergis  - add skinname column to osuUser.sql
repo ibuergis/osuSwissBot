@@ -1,1 +1,0 @@
-ALTER TABLE osuUser ADD COLUMN skinName VARCHAR(1000) AFTER skin;

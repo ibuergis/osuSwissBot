@@ -9,12 +9,12 @@ readme = "README.md"
 
 dependencies = [
     "pillow ~= 10.1",
-    "discord.py ~= 2.3",
-    "ossapi == v4.0.0b1",
+    "ossapi == v5.2.1",
     "sqlalchemy ~= 2.0",
-    "py-cord ~= 2.4",
+    "py-cord ~= 2.6.1",
     "pymysql ~= 1.1",
-    "osrparse ~= 6.0"
+    "osrparse ~= 6.0",
+    "firebase-admin ~= 6.8.0"
 ]
 
 [project.optional-dependencies]

@@ -1,71 +1,31 @@
-from msilib.schema import File
-from typing import Any
+import discord
 
 import osrparse
 from discord import Embed
-from discord.ext import commands
 
 import ossapi
-from ossapi import Ossapi, GameMode, RankingType, ScoreType, Replay
+from ossapi import Ossapi, GameMode, RankingType, Replay, Mod, Score, Beatmap
 
 import os
-import re as regex
 
 from ossapi.models import UserStatistics
 
 from .calculations import gradeCalculator, gradeConverter, calculateScoreViaApi
 
-from ..dataManager import DataManager
-from ..database.entities.guild import Guild
-from ..database.objectManager import ObjectManager
-from ..database.entities import OsuUser
-from ..helper import Validator, GuildHelper
-from ..prepareReplay.prepareReplayManager import createAll
-from ..botFeatures.buttons.thumbnail import Thumbnail
+from src.database import Player
+from src.helper import Validator
+from src.prepareReplay.prepareReplayManager import createAll
+from src.helper.osuHelper import handleModToString, modStringToList
 
-from urllib.request import urlopen
-
-
-def getUsersFromWebsite(pages: int, gameMode=GameMode.OSU, country='ch') -> list[dict[str | int, Any]]:
-    osuUsers = []
-    for page in range(pages):
-        page += 1
-        page = urlopen(f'https://osu.ppy.sh/rankings/{gameMode.value}/performance?country={country}&page={page}')
-        html_bytes = page.read()
-        html: str = ''.join(html_bytes.decode("utf-8").split('\n'))
-        ''.join(html.split('\n'))
-        osuUsersHtml = regex.findall('<tr.*?</tr>', html)[1:]
-        for osuUserHtml in osuUsersHtml:
-            SingleTD = regex.findall('<td.*?</td>', osuUserHtml)[:2]
-            rank = regex.findall('>.*?<', SingleTD[0])[0]
-
-            id = regex.findall(f'https://osu.ppy.sh/users/.*?/{gameMode.value}', SingleTD[1])[0].replace(
-                'https://osu.ppy.sh/users/', '').replace(f'/{gameMode.value}', '')
-            linking = regex.findall('<a.*?</a>', SingleTD[1])[1]
-            username = regex.findall('>.*?<', linking)[0]
-
-            osuUser = {
-                'rank': int(rank.replace('>', '').replace('<', '').strip().replace('#', '')),
-                'id': int(id),
-                'username': username.replace('>', '').replace('<', '').strip()
-            }
-
-            osuUsers.append(osuUser)
-
-    return osuUsers
-
-
-def createScoreEmbed(osuUser: OsuUser, score: ossapi.Score, beatmap: ossapi.Beatmap, gamemode: ossapi.GameMode) -> Embed:
+def createScoreEmbed(player: Player, score: Score, beatmap: Beatmap, gamemode: ossapi.GameMode) -> Embed:
     if gamemode == ossapi.GameMode.MANIA:
         raise Exception('MANIA is not supported')
-    mods = score.mods.short_name()
-    if mods == '':
-        mods = 'NM'
+    mods = handleModToString(score.mods)
     embed = Embed(colour=16007990)
     beatmapset = beatmap.beatmapset()
     embed.set_author(
-        name=f'Score done by {osuUser.username}',
-        url=f'https://osu.ppy.sh/scores/{score.mode.value}/{score.id}'
+        name=f'Score done by {player['username']}',
+        url=f'https://osu.ppy.sh/scores/{score.beatmap.mode.value}/{score.id}'
 
     )
     embed.title = f'{beatmapset.artist} - {beatmapset.title} [{beatmap.version}]'
@@ -73,7 +33,7 @@ def createScoreEmbed(osuUser: OsuUser, score: ossapi.Score, beatmap: ossapi.Beat
     embed.set_image(
         url=f'https://assets.ppy.sh/beatmaps/{beatmap.beatmapset_id}/covers/cover.jpg?1650602952')
 
-    embed.set_thumbnail(url=f'https://a.ppy.sh/{osuUser.id}?1692642160')
+    embed.set_thumbnail(url=f'https://a.ppy.sh/{player['userId']}?1692642160')
     embed.add_field(name='Score:', value=f"{score.score:,}")
     embed.add_field(name='Accuracy:', value=f"{str(int(score.accuracy * 10000) / 100)}%")
     embed.add_field(name='Hits:',
@@ -88,36 +48,25 @@ def createScoreEmbed(osuUser: OsuUser, score: ossapi.Score, beatmap: ossapi.Beat
     return embed
 
 
-def convertModsToList(mods: ossapi.Mod) -> list[str]:
-    mod = mods.short_name()
-    if mod == 'NM':
-        mod = ''
-    n = 2
-    return [mod[i:i + n] for i in range(0, len(mod), n)]
-
-
 class OsuHandler:
-    __om: ObjectManager
 
     __osu: Ossapi
 
     __validator: Validator
 
-    __guildHelper: GuildHelper
-
-    def __init__(self, om: ObjectManager, config: dict, validator: Validator, guildHelper: GuildHelper):
-        self.__om = om
+    def __init__(self, config: dict, validator: Validator):
         self.__validator = validator
         self.__osu = Ossapi(int(config['clientId']),
                             config['clientSecret'], 'http://localhost:3914/', ['public', 'identify'],
                             grant="authorization")
 
-        self.__guildHelper = guildHelper
-
     def getUserFromAPI(self, usernameOrId: str | int, *, forceById: bool = False) -> ossapi.User:
         user = None
         if not forceById:
-            user = self.__osu.user(usernameOrId)
+            try:
+                user = self.__osu.user(usernameOrId)
+            except ValueError:
+                pass
 
         if user is not None:
             return user
@@ -137,134 +86,6 @@ class OsuHandler:
             osuUsers.extend(result.ranking)
         return osuUsers
 
-    def sendScoreEmbeds(self, osuUser: OsuUser, score: ossapi.Score, bot: commands.Bot):
-        mode = score.mode
-        beatmap = self.__osu.beatmap(score.beatmap.id)
-        topPlays = self.__osu.user_scores(osuUser.id, ScoreType.BEST, include_fails=False, limit=2,
-                                          mode=mode)
-
-        guilds: list[Guild] = self.__om.getAll(Guild)
-        for guild in guilds:
-
-            mentions = []
-            for discordUser in guild.osuMentionOnTopPlay:
-                user = bot.get_user(int(discordUser.userId))
-                mentions.append(user.mention)
-
-            message = ''
-            if score.pp is not None:
-                if score.pp == topPlays[0].pp:
-                    message = f'{" ".join(mentions)} this is a new top play'
-                elif score.pp == topPlays[0].pp and int(score.pp // 100) == int(topPlays[1].pp):
-                    message = f'{" ".join(mentions)} this person broke the {int(score.pp / 100) * 100}pp barrier'
-
-            channel = self.__guildHelper.getScoresChannel(guild, mode)
-            if channel is not None:
-                bot.loop.create_task(bot.get_channel(int(channel)).send(
-                    message,
-                    embed=createScoreEmbed(osuUser, score, beatmap, mode),
-                    view=Thumbnail(self.__osu, bot, osuUser.id, score, beatmap)
-                ))
-
-    def processRecentUserScores(self, bot: commands.Bot, osuUser: OsuUser, mode: GameMode.OSU):
-        scores = self.__osu.user_scores(osuUser.id, ScoreType.RECENT, include_fails=False, limit=20, mode=mode)
-        jsonScores = DataManager.getJson('lastScores')
-        if jsonScores is None:
-            jsonScores = {
-                'osu': {},
-                'mania': {},
-                'taiko': {},
-                'catch': {}
-            }
-
-        if str(osuUser.id) not in jsonScores[mode.name.lower()].keys():
-            jsonScores[mode.name.lower()][str(osuUser.id)] = []
-
-        tempScores = []
-
-        self.__validator.isGamemode(mode, throw=True)
-
-        for score in scores:
-            tempScores.append(score.id)
-            if score.replay is True and score.id is not None and score.id not in jsonScores[mode.name.lower()][str(osuUser.id)]:
-                self.sendScoreEmbeds(osuUser, score, bot)
-
-        jsonScores[mode.name.lower()][str(osuUser.id)] = tempScores
-        DataManager.setJson('lastScores', jsonScores)
-
-    def getRecentPlays(self, bot: commands.Bot, mode: ossapi.GameMode = ossapi.GameMode.OSU,
-                       ranks: list[int] | None = None):
-
-        self.__validator.isGamemode(mode, throw=True)
-
-        osuUserFilter = OsuUser.__getattribute__(OsuUser, mode.name.lower() + 'Rank')
-
-        select = self.__om.select(OsuUser)
-        if ranks is None:
-            select = select.where(osuUserFilter is not None)
-        else:
-            select = select.where(osuUserFilter.in_(tuple(ranks)))
-
-        osuUsers: list[OsuUser] = self.__om.execute(select).scalars()
-
-        for osuUser in osuUsers:
-            self.processRecentUserScores(bot, osuUser, mode)
-
-    def updateUsers(self):
-        usersFromApi: list[UserStatistics] = self.getUsersFromAPI(2, GameMode.OSU, 'ch')
-        taikoUsersFromApi: list[UserStatistics] = self.getUsersFromAPI(1, GameMode.TAIKO, 'ch')
-        catchUsersFromApi: list[UserStatistics] = self.getUsersFromAPI(1, GameMode.CATCH, 'ch')
-
-        currentRank = 0
-        for userFromApi in usersFromApi:
-            osuUser: OsuUser = self.__om.get(OsuUser, userFromApi.user.id)
-            currentRank += 1
-            if osuUser is None:
-                osuUser = OsuUser(
-                    id=userFromApi.user.id,
-                    username=userFromApi.user.username,
-                    osuRank=currentRank,
-                    country='ch'
-                )
-                self.__om.add(osuUser)
-            else:
-                osuUser.username = userFromApi.user.username
-                osuUser.osuRank = currentRank
-
-        currentRank = 0
-        for taikouserFromApi in taikoUsersFromApi:
-            osuUser: OsuUser = self.__om.get(OsuUser, taikouserFromApi.user.id)
-            currentRank += 1
-            if osuUser is None:
-                osuUser = OsuUser(
-                    id=taikouserFromApi.user.id,
-                    username=taikouserFromApi.user.username,
-                    taikoRank=currentRank,
-                    country='ch'
-                )
-                self.__om.add(osuUser)
-            else:
-                osuUser.username = taikouserFromApi.user.username
-                osuUser.taikoRank = currentRank
-
-        currentRank = 0
-        for catchuserFromApi in catchUsersFromApi:
-            osuUser: OsuUser = self.__om.get(OsuUser, catchuserFromApi.user.id)
-            currentRank += 1
-            if osuUser is None:
-                osuUser = OsuUser(
-                    id=catchuserFromApi.user.id,
-                    username=catchuserFromApi.user.username,
-                    catchRank=currentRank,
-                    country='ch'
-                )
-                self.__om.add(osuUser)
-            else:
-                osuUser.username = catchuserFromApi.user.username
-                osuUser.catchRank = currentRank
-
-        self.__om.flush()
-
     def prepareReplay(
             self,
             scoreId: int,
@@ -277,25 +98,25 @@ class OsuHandler:
         except ValueError:
             return None
 
-        osuUser = self.__osu.user(score.user_id, mode=score.mode)
+        osuUser = self.__osu.user(score.user_id, mode=score.beatmap.mode)
         beatmap = self.__osu.beatmap(score.beatmap.id)
         replay = createAll(self.__osu, osuUser, score, beatmap, description, shortenTitle)
         return replay
 
-    def convertReplayFile(self, file: File) -> Replay:
+    def convertReplayFile(self, file: discord.Attachment) -> Replay:
         replay = osrparse.Replay.from_file(file)
         ossapiReplay = ossapi.Replay(replay, self.__osu)
 
         return ossapiReplay
 
-    def prepareReplayFromFile(
+    async def prepareReplayFromFile(
             self,
             ctx,
-            file: File, description:
+            file: discord.Attachment, description:
             str = '', shortenTitle: bool = False
     ) -> ossapi.Score:
 
-        file.save(f'data/output/{ctx.author.id}.osr')
+        await file.save(f'data/output/{ctx.author.id}.osr')
         file = open(f'data/output/{ctx.author.id}.osr', 'rb')
         replay = self.convertReplayFile(file)
         file.close()
@@ -304,20 +125,27 @@ class OsuHandler:
         user = self.__osu.user(replay.username)
         beatmap: ossapi.Beatmap = self.__osu.beatmap(checksum=replay.beatmap_hash)
 
-        mods = convertModsToList(replay.mods)
-        calculated = calculateScoreViaApi(beatmap.id, s100=replay.count_100, s50=replay.count_50,
-                                          miss=replay.count_miss, mods=mods, combo=replay.max_combo)
+        mods = modStringToList(handleModToString(replay.mods))
+        calculated = calculateScoreViaApi(
+            beatmap.id, 
+            s100=replay.count_100, 
+            s50=replay.count_50,
+            miss=replay.count_miss,
+            mods=mods,
+            combo=replay.max_combo
+            )
         grade = gradeCalculator(replay.count_300, replay.count_100, replay.count_50, replay.count_miss)
 
         score = ossapi.Score()
-        score.pp = calculated['local_pp']
+        score.pp = calculated['performance_attributes']['pp']
         score.id = ctx.author.id if replay.replay_id is None else replay.replay_id
         score.max_combo = replay.max_combo
-        score.accuracy = calculated['accuracy'] / 100
+        score.accuracy = calculated['score']['accuracy'] / 100
         score.mods = replay.mods
         score.rank = gradeConverter(grade, replay.mods)
-        score.created_at = replay.timestamp
-        score.mode = replay.mode
+        score.ended_at = replay.timestamp
+        score.beatmap = beatmap
+        score.beatmap.mode = replay.mode
         createAll(self.__osu, user, score, beatmap, description, shortenTitle)
 
         return score
