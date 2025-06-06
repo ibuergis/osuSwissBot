@@ -9,30 +9,10 @@ readme = "README.md"
 
 dependencies = [
     "pillow ~= 10.1",
-    "discord.py ~= 2.3",
-    "ossapi == v4.0.0b1",
+    "ossapi == v5.2.1",
     "sqlalchemy ~= 2.0",
-    "py-cord ~= 2.4",
+    "py-cord ~= 2.6.1",
     "pymysql ~= 1.1",
-    "osrparse ~= 6.0"
+    "osrparse ~= 6.0",
+    "firebase-admin ~= 6.8.0"
 ]
-
-[project.optional-dependencies]
-tests = [
-    "Pylama[toml] ~= 8.4"
-]
-
-[tool.pylama]
-format = "pylint"
-skip = "venv/*,build/*"
-
-[tool.pylama.linter.pycodestyle]
-max_line_length = 130
-ignore = "E302"
-
-[tool.pylama.linter.pyflakes]
-ignore = "E0602"
-
-[[tool.pylama.files]]
-path = "*/__init__.py"
-ignore = "W0611"

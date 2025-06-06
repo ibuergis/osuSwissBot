@@ -13,7 +13,7 @@ def calculateScoreViaApi(
         combo: int | None = None,
         rework: str = 'live'
 ) -> dict:
-    link = 'https://pp-api.huismetbenen.nl/calculate-score'
+    link = 'https://api.pp.huismetbenen.nl/calculate-score'
 
     request = {
         'map_id': mapId,
@@ -21,6 +21,8 @@ def calculateScoreViaApi(
         'ok': s100,
         'meh': s50,
         'miss': miss,
+        'large_tick_misses': 0,
+        'slider_tail_misses': 0,
         'mods': mods,
         'rework': rework
     }
@@ -28,7 +30,9 @@ def calculateScoreViaApi(
     if combo is not None:
         request['combo'] = combo
 
-    return requests.patch(link, json=request).json()
+    endResult = requests.post(link, json=request)
+    print(endResult)
+    return endResult.json()
 
 def gradeCalculator(n300: int = 0, n100: int = 0, n50: int = 0, miss: int = 0) -> str:
     objectCount = n300 + n100 + n50 + miss
@@ -46,7 +50,6 @@ def gradeCalculator(n300: int = 0, n100: int = 0, n50: int = 0, miss: int = 0) -
     return 'D'
 
 def gradeConverter(grade: str, mods: ossapi.Mod) -> Grade:
-
     special = 'HD' in mods.short_name() or 'FL' in mods.short_name()
 
     if grade == 'SS':

@@ -1,6 +1,7 @@
 osuSwissBot.egg-info/
 build/
 config/config.json
+config/firebase.json
 data/lastScores.json
 data/skins
 data/temp

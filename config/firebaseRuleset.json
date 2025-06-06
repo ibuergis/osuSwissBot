@@ -1,0 +1,9 @@
+{
+    "rules": {
+      "player" : {
+        ".indexOn": ["userId", "username", "skin"]
+      },
+        ".read": true,
+        ".write": true
+      }
+  }

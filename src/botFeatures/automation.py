@@ -3,7 +3,7 @@ from src.osuFeatures.osuHandler import OsuHandler
 from ossapi import GameMode
 from datetime import datetime
 
-
+# currently unused
 class Automation(commands.Cog):
     __bot: commands.Bot
 

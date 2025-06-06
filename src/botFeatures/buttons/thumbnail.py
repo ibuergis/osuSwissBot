@@ -34,7 +34,7 @@ class Thumbnail(discord.ui.View):
         error = ''
         hasReplay: bool = createAll(
             self.osu,
-            self.osu.user(self.userId, mode=self.score.mode),
+            self.osu.user(self.userId, mode=self.score.beatmap.mode),
             self.score,
             self.beatmap
         )

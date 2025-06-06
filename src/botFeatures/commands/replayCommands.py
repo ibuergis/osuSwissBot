@@ -1,5 +1,5 @@
 import discord
-from discord import Option
+from discord import option
 from discord.ext import commands
 
 from src.osuFeatures.osuHandler import OsuHandler
@@ -16,18 +16,20 @@ class ReplayCommands(commands.Cog):
         self.osuHandler = osuHandler
 
     @commands.slash_command(description="Render a thumbnail with the score ID")
-    async def preparereplay(
+    @option('scoreid', int, description='add the id of the score')
+    @option('description', str, description='a small text inside the thumbnail', default='')
+    @option('shortentitle', bool, description='removes the featured artists in the title', default=False)
+    async def preparereplayfromscoreid(
             self,
             ctx: discord.ApplicationContext,
             *,
-            scoreid: Option(int, description='add the id of the score'), # noqa
-            description: Option(str, description='a small text inside the thumbnail', default=''), # noqa
-            shortentitle: Option(bool, description='removes the featured artists in the title', default=False), # noqa
+            scoreid: int,
+            description: str,
+            shortentitle: bool = False,
     ):
-
         channel = self.bot.get_channel(ctx.channel_id)
 
-        self.bot.loop.create_task(ctx.respond('replay is being prepared'))
+        await ctx.respond('replay is being prepared')
         files = []
         response = self.osuHandler.prepareReplay(scoreid, description, shortentitle)
 
@@ -48,18 +50,21 @@ class ReplayCommands(commands.Cog):
             await cleanup(scoreid)
 
     @commands.slash_command(description="Render a thumbnail with a replay file")
+    @option('replayfile', discord.Attachment, description='add the replay file')
+    @option('description', str, description='a small text inside the thumbnail', default='')
+    @option('shortentitle', bool, description='removes the featured artists in the title', default=False)
     async def preparereplayfromfile(
             self,
             ctx: discord.ApplicationContext,
             *,
-            replayfile: Option(discord.Attachment, description='add the replay file'), # noqa
-            description: Option(str, description='a small text inside the thumbnail', default=''), # noqa
-            shortentitle: Option(bool, description='removes the featured artists in the title', default=False), # noqa
+            replayfile: discord.Attachment,
+            description: str = '',
+            shortentitle: bool = False,
     ):
         channel = self.bot.get_channel(ctx.channel_id)
         self.bot.loop.create_task(ctx.respond('replay is being prepared'))
 
-        score = self.osuHandler.prepareReplayFromFile(ctx, replayfile, description, shortentitle)
+        score = await self.osuHandler.prepareReplayFromFile(ctx, replayfile, description, shortentitle)
         files = [await replayfile.to_file(), discord.File(f'data/output/{score.id}.jpg')]
         description = open(f'data/output/{score.id}Description', 'r').read()
         title = open(f'data/output/{score.id}Title', 'r').read().replace('#star#', '⭐')
