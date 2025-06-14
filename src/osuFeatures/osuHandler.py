@@ -7,6 +7,7 @@ import ossapi
 from ossapi import Ossapi, GameMode, RankingType, Replay, Score, Beatmap
 
 import os
+import tempfile
 
 from ossapi.models import UserStatistics
 
@@ -14,7 +15,7 @@ from .calculations import gradeCalculator, gradeConverter, calculateScoreViaApi
 
 from src.database import Player
 from src.helper import Validator
-from src.prepareReplay.prepareReplayManager import createAll
+from src.prepareReplay.prepareReplayManager import createAll, RenderedReplay
 from src.helper.osuHelper import handleModToString, modStringToList
 
 def createScoreEmbed(player: Player, score: Score, beatmap: Beatmap, gamemode: ossapi.GameMode) -> Embed:
@@ -91,7 +92,7 @@ class OsuHandler:
             scoreId: int,
             description: str = '',
             shortenTitle: bool = False
-    ) -> bool | None:
+    ) -> RenderedReplay | None:
         try:
             score: ossapi.Score = self.__osu.score(scoreId)
             score.id = scoreId
@@ -100,8 +101,7 @@ class OsuHandler:
 
         osuUser = self.__osu.user(score.user_id, mode=score.beatmap.mode)
         beatmap = self.__osu.beatmap(score.beatmap.id)
-        replay = createAll(self.__osu, osuUser, score, beatmap, description, shortenTitle)
-        return replay
+        return createAll(self.__osu, osuUser, score, beatmap, description, shortenTitle)
 
     def convertReplayFile(self, file: discord.Attachment) -> Replay:
         replay = osrparse.Replay.from_file(file)
@@ -115,13 +115,12 @@ class OsuHandler:
             file: discord.Attachment,
             description: str = '',
             shortenTitle: bool = False
-    ) -> ossapi.Score:
+    ) -> RenderedReplay:
 
-        await file.save(f'data/output/{ctx.author.id}.osr')
-        file = open(f'data/output/{ctx.author.id}.osr', 'rb')
-        replay = self.convertReplayFile(file)
-        file.close()
-        os.remove(f'data/output/{ctx.author.id}.osr')
+        replayFile = tempfile.TemporaryFile()
+        await file.save(replayFile)
+        replay = self.convertReplayFile(replayFile)
+        replayFile.close()
 
         user = self.__osu.user(replay.username)
         beatmap: ossapi.Beatmap = self.__osu.beatmap(checksum=replay.beatmap_hash)
@@ -147,6 +146,4 @@ class OsuHandler:
         score.ended_at = replay.timestamp
         score.beatmap = beatmap
         score.beatmap.mode = replay.mode
-        createAll(self.__osu, user, score, beatmap, description, shortenTitle)
-
-        return score
+        return createAll(self.__osu, user, score, beatmap, description, shortenTitle)

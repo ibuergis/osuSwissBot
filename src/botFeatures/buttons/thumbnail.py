@@ -1,7 +1,7 @@
 import discord
 import ossapi
 from discord.ext import commands
-from src.prepareReplay.prepareReplayManager import createAll, cleanup
+from src.prepareReplay.prepareReplayManager import createAll
 
 
 class Thumbnail(discord.ui.View):
@@ -32,24 +32,20 @@ class Thumbnail(discord.ui.View):
     @discord.ui.button(label="render Score", style=discord.ButtonStyle.primary, emoji="🖕")
     async def button_callback(self, button: discord.Button, interaction: discord.Interaction):
         error = ''
-        hasReplay: bool = createAll(
+        replay = createAll(
             self.osu,
             self.osu.user(self.userId, mode=self.score.beatmap.mode),
             self.score,
             self.beatmap
         )
 
-        thumbnail: discord.File = discord.File(f'data/output/{self.score.id}.jpg')
+        thumbnail: discord.File = discord.File(replay.thumbnail)
 
-        if hasReplay:
-            replay = discord.File(f'data/output/{self.score.id}.osr')
+        if replay.replayFileContent is not None:
+            replay = discord.File(replay.replayFileContent)
             files = [thumbnail, replay]
         else:
             error = "**Score has no replay on the website**\n\n"
             files = [thumbnail]
 
-        description: str = open(f'data/output/{self.score.id}Description', 'r').read()
-        title: str = open(f'data/output/{self.score.id}Title', 'r').read().replace('#star#', '⭐')
-
-        await interaction.message.reply(f'{error}title:\n```{title}```\ndescription:\n```{description}```', files=files)
-        await cleanup(self.score.id)
+        await interaction.message.reply(f'{error}title:\n```{replay.title}```\ndescription:\n```{replay.description}```', files=files)
