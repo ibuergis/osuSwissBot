@@ -1,7 +1,8 @@
 import requests
+import tempfile
 
-import os
 import re
+import io
 
 from src.helper.osuHelper import handleModToString, modStringToList
 
@@ -10,6 +11,13 @@ from ossapi import User, Score, Beatmap
 from ossapi.models import DifficultyAttributes
 
 from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ImageFilter
+
+class RenderedReplay:
+    title: str = None
+    description: str = None
+    thumbnail: bytes = None
+    replayFileContent: bytes | None = None
+
 
 
 def getTextLength(font: ImageFont, text: str) -> int:
@@ -50,22 +58,16 @@ def add_corners(im: Image, rad: int) -> Image:
     return im
 
 
-def createThumbnail(user: User, score: Score, beatmap: Beatmap, description: str = '', shortenTitle: bool = False):
+def createThumbnail(user: User, score: Score, beatmap: Beatmap, renderedReplay: RenderedReplay = None, description: str = '', shortenTitle: bool = False):
     beatmapset = beatmap.beatmapset()
 
-    with open(f'data/temp/{score.id}.jpg', 'wb+') as f:
-        cover = requests.get(
-            f'https://assets.ppy.sh/beatmaps/{beatmap.beatmapset_id}/covers/card@2x.jpg?1650700167').content
-        f.write(cover)
-        f.close()
-
-    with open(f'data/temp/{score.id}.png', 'wb+') as f:
-        cover = requests.get(f'https://a.ppy.sh/{user.id}?1692642160.jpeg').content
-        f.write(cover)
-        f.close()
+    cover = requests.get(
+        f'https://assets.ppy.sh/beatmaps/{beatmap.beatmapset_id}/covers/card@2x.jpg?1650700167').content
 
     template = Image.open('data/templates/main.png', 'r').convert('RGBA')
-    thumbnail = Image.open(f'data/temp/{score.id}.jpg')
+    coverFile = tempfile.TemporaryFile()
+    coverFile.write(cover)
+    thumbnail = Image.open(coverFile)
     enhancer = ImageEnhance.Brightness(thumbnail)
     thumbnail = enhancer.enhance(0.5)
     thumbnail = thumbnail.crop((130, 0, 670, 280))
@@ -82,7 +84,12 @@ def createThumbnail(user: User, score: Score, beatmap: Beatmap, description: str
 
     thumbnail.paste(template, (0, 0), template)
 
-    pfp = Image.open(f'data/temp/{score.id}.png').resize((300, 300)).convert('RGBA')
+    pfpBytes = requests.get(f'https://a.ppy.sh/{user.id}?1692642160.jpeg').content
+
+    pfpFile = tempfile.TemporaryFile()
+    pfpFile.write(pfpBytes)
+
+    pfp = Image.open(pfpFile).resize((300, 300)).convert('RGBA')
     pfp = add_corners(pfp, 85)
     thumbnail.paste(pfp, (812, 443), pfp)
 
@@ -143,29 +150,42 @@ def createThumbnail(user: User, score: Score, beatmap: Beatmap, description: str
 
     thumbnail.paste(rank, (490, 450), rank)
 
-    thumbnail.save(f'data/output/{score.id}.jpg')
+    if renderedReplay is None:
+        renderedReplay = RenderedReplay()
+    
+    whatever = io.BytesIO()
+    thumbnail.save(whatever, 'JPEG')
+    renderedReplay.thumbnail = whatever.getvalue()
+    print(renderedReplay.thumbnail)
+    coverFile.close()
+    pfpFile.close()
+
+    return renderedReplay
 
 
-def createTitle(osu: ossapi.Ossapi, user: User, score: Score, beatmap: Beatmap, shortenTitle: bool = False):
+
+def createTitle(osu: ossapi.Ossapi, user: User, score: Score, beatmap: Beatmap, renderedReplay: RenderedReplay = None, shortenTitle: bool = False):
     beatmapset = beatmap.beatmapset()
     songTitle = shortenSongTitle(beatmapset.title) if shortenTitle else beatmapset.title
     modString = handleModToString(score.mods)
     detailed: DifficultyAttributes = osu.beatmap_attributes(beatmap.id, mods=modString.replace('V2', ''))
-    title = open(f'data/output/{score.id}Title', 'w+')
     songInfo = f"{beatmapset.artist} - {songTitle}"
-    mapInfo = f"[{beatmap.version}] {round(detailed.attributes.star_rating, 2)}#star# +{modString}"
-    title.write(f'{user.username} | {songInfo}{mapInfo}')
-    title.close()
+    mapInfo = f"[{beatmap.version}] {round(detailed.attributes.star_rating, 2)}⭐ +{modString}"
+    if renderedReplay is None:
+        renderedReplay = RenderedReplay()
+    renderedReplay.title = f'{user.username} | {songInfo}{mapInfo}'
+    return renderedReplay
 
 
-def createDescription(user: User, score: Score, beatmap: Beatmap):
+def createDescription(user: User, score: Score, beatmap: Beatmap, renderedReplay: RenderedReplay = None):
     scoreLink = f'https://osu.ppy.sh/scores/{score.id}'
     page = requests.get(scoreLink).text.replace('\n', '')
     if re.match('.*Page Missing.*', page):
         scoreLink = 'not on the website'
 
-    description = open(f'data/output/{score.id}Description', 'w+')
-    description.write(
+    if renderedReplay is None:
+        renderedReplay = RenderedReplay()
+    renderedReplay.description = (
         f"This score was set on {score.ended_at.strftime('%d.%m.%Y at %H:%M')}.\n"
         f"\n"
         f"Player: https://osu.ppy.sh/users/{user.id}\n"
@@ -174,35 +194,21 @@ def createDescription(user: User, score: Score, beatmap: Beatmap):
         f"\n"
         f"Join the osu swiss community in discord: https://discord.com/invite/SHz8QtD\n"
     )
-    description.close()
+    return renderedReplay
 
 
-def createReplayFile(osu: ossapi.Ossapi, score: Score, gamemode: ossapi.GameMode = ossapi.GameMode.OSU) -> bool:
+def createReplayFile(osu: ossapi.Ossapi, score: Score, gamemode: ossapi.GameMode = ossapi.GameMode.OSU, renderedReplay: RenderedReplay = None) -> bool:
     try:
-        replay = osu.download_score(score.id, raw=True)
-        with open(f'data/output/{score.id}.osr', 'wb+') as f:
-            f.write(replay)
-            f.close()
-            return True
+        renderedReplay.replayFileContent = osu.download_score(score.id, raw=True)
     except ValueError:
-        return False
+        renderedReplay.replayFileContent = None
+
+    return renderedReplay
 
 
 def createAll(osu: ossapi.Ossapi, user: User, score: Score, beatmap: Beatmap, description='',
-              shortenTitle: bool = False) -> bool:
-    createThumbnail(user, score, beatmap, description, shortenTitle)
-    createTitle(osu, user, score, beatmap, shortenTitle)
-    createDescription(user, score, beatmap)
-    return createReplayFile(osu, score, score.beatmap.mode)
-
-
-async def cleanup(scoreId: int):
-    os.remove(f'data/temp/{scoreId}.png')
-    os.remove(f'data/temp/{scoreId}.jpg')
-    os.remove(f'data/output/{scoreId}Description')
-    os.remove(f'data/output/{scoreId}Title')
-    os.remove(f'data/output/{scoreId}.jpg')
-    try:
-        os.remove(f'data/output/{scoreId}.osr')
-    except FileNotFoundError:
-        pass
+              shortenTitle: bool = False) -> RenderedReplay:
+    renderedReplay = createThumbnail(user, score, beatmap, None, description, shortenTitle)
+    renderedReplay = createTitle(osu, user, score, beatmap, renderedReplay, shortenTitle)
+    renderedReplay = createDescription(user, score, beatmap, renderedReplay)
+    return createReplayFile(osu, score, score.beatmap.mode, renderedReplay)
