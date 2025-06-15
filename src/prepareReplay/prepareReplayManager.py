@@ -1,5 +1,5 @@
+import ossapi.enums
 import requests
-import tempfile
 
 import re
 import io
@@ -12,13 +12,21 @@ from ossapi.models import DifficultyAttributes
 
 from PIL import Image, ImageEnhance, ImageFont, ImageDraw, ImageFilter
 
+rankedAlias = {
+    ossapi.enums.RankStatus.RANKED:    'data/rankedStatus/ranked.png',
+    ossapi.enums.RankStatus.GRAVEYARD: 'data/rankedStatus/pending.png',
+    ossapi.enums.RankStatus.PENDING: 'data/rankedStatus/pending.png',
+    ossapi.enums.RankStatus.WIP: 'data/rankedStatus/pending.png',
+    ossapi.enums.RankStatus.LOVED: 'data/rankedStatus/loved.png',
+    ossapi.enums.RankStatus.APPROVED: 'data/rankedStatus/approved.png',
+    ossapi.enums.RankStatus.QUALIFIED: 'data/rankedStatus/approved.png',
+}
+
 class RenderedReplay:
     title: str = None
     description: str = None
     thumbnail: bytes = None
     replayFileContent: bytes | None = None
-
-
 
 def getTextLength(font: ImageFont, text: str) -> int:
     return font.getbbox(text)[2]
@@ -58,16 +66,21 @@ def add_corners(im: Image, rad: int) -> Image:
     return im
 
 
-def createThumbnail(user: User, score: Score, beatmap: Beatmap, renderedReplay: RenderedReplay = None, description: str = '', shortenTitle: bool = False):
+def createThumbnail(user: User, score: Score, beatmap: Beatmap, description: str = '', shortenTitle: bool = False) -> bytes:
     beatmapset = beatmap.beatmapset()
 
     cover = requests.get(
         f'https://assets.ppy.sh/beatmaps/{beatmap.beatmapset_id}/covers/card@2x.jpg?1650700167').content
 
-    template = Image.open('data/templates/main.png', 'r').convert('RGBA')
-    coverFile = tempfile.TemporaryFile()
-    coverFile.write(cover)
-    thumbnail = Image.open(coverFile)
+    if user.statistics.global_rank is None:
+        template = Image.open('data/templates/unranked.png', 'r').convert('RGBA')
+    else:
+        template = Image.open('data/templates/main.png', 'r').convert('RGBA')
+    coverFile = io.BytesIO(cover)
+    try:
+        thumbnail = Image.open(coverFile)
+    except:
+        thumbnail = Image.open('data/background/default.jpg', 'r')
     enhancer = ImageEnhance.Brightness(thumbnail)
     thumbnail = enhancer.enhance(0.5)
     thumbnail = thumbnail.crop((130, 0, 670, 280))
@@ -86,8 +99,7 @@ def createThumbnail(user: User, score: Score, beatmap: Beatmap, renderedReplay: 
 
     pfpBytes = requests.get(f'https://a.ppy.sh/{user.id}?1692642160.jpeg').content
 
-    pfpFile = tempfile.TemporaryFile()
-    pfpFile.write(pfpBytes)
+    pfpFile = io.BytesIO(pfpBytes)
 
     pfp = Image.open(pfpFile).resize((300, 300)).convert('RGBA')
     pfp = add_corners(pfp, 85)
@@ -109,11 +121,12 @@ def createThumbnail(user: User, score: Score, beatmap: Beatmap, renderedReplay: 
     x = (1550 - getTextLength(getFont(90), acc) // 2)
     drawer.text((x, 262), acc, font=getFont(90), fill=(255, 255, 255))
 
-    globalRank = '#' + str(user.statistics.global_rank)
-    drawer.text((1293, 570), globalRank, font=getFont(65), fill=(255, 255, 255))
+    if user.statistics.global_rank is not None:
+        globalRank = '#' + str(user.statistics.global_rank)
+        drawer.text((1293, 570), globalRank, font=getFont(65), fill=(255, 255, 255))
 
-    swissRank = '#' + str(user.statistics.country_rank)
-    drawer.text((1293, 662), swissRank, font=getFont(65), fill=(255, 255, 255))
+        swissRank = '#' + str(user.statistics.country_rank)
+        drawer.text((1293, 662), swissRank, font=getFont(65), fill=(255, 255, 255))
 
     artist = beatmapset.artist
     x = (thumbnail.width - getTextLength(getFont(60), artist)) // 2
@@ -139,9 +152,10 @@ def createThumbnail(user: User, score: Score, beatmap: Beatmap, renderedReplay: 
 
     avg = len(mods) / 2
     for id in range(len(mods)):
-        if mods[id].lower() in ['cl', 'v2']:
+        if mods[id].lower() in ['cl', 'v2', 'nm']:
             continue
         mod = Image.open(f'data/mods/{mods[id].lower()}.png')
+        mod = mod.resize((80, 56))
         thumbnail.paste(mod, (int(920 - 44 - 88 * (avg - id - 1)), 780), mod)
 
     rank = Image.open(f'data/rank/{score.rank.value}.png')
@@ -150,42 +164,43 @@ def createThumbnail(user: User, score: Score, beatmap: Beatmap, renderedReplay: 
 
     thumbnail.paste(rank, (490, 450), rank)
 
-    if renderedReplay is None:
-        renderedReplay = RenderedReplay()
+    rankedStatus = Image.open(rankedAlias[beatmap.ranked])
+
+    rankedStatus = rankedStatus.resize((130, 130))
+
+    thumbnail.paste(rankedStatus, (30, 25), rankedStatus)
+
+    gamemode = Image.open(f'data/gamemode/{beatmap.mode.value}.png')
+
+    gamemode = gamemode.resize((130, 130))
+
+    thumbnail.paste(gamemode, (1760, 25), gamemode)
     
     whatever = io.BytesIO()
     thumbnail.save(whatever, 'JPEG')
-    renderedReplay.thumbnail = whatever.getvalue()
-    print(renderedReplay.thumbnail)
-    coverFile.close()
-    pfpFile.close()
+    thumbnail.close()
 
-    return renderedReplay
+    return whatever.getvalue()
 
 
 
-def createTitle(osu: ossapi.Ossapi, user: User, score: Score, beatmap: Beatmap, renderedReplay: RenderedReplay = None, shortenTitle: bool = False):
+def createTitle(osu: ossapi.Ossapi, user: User, score: Score, beatmap: Beatmap, shortenTitle: bool = False) -> str:
     beatmapset = beatmap.beatmapset()
     songTitle = shortenSongTitle(beatmapset.title) if shortenTitle else beatmapset.title
     modString = handleModToString(score.mods)
     detailed: DifficultyAttributes = osu.beatmap_attributes(beatmap.id, mods=modString.replace('V2', ''))
     songInfo = f"{beatmapset.artist} - {songTitle}"
     mapInfo = f"[{beatmap.version}] {round(detailed.attributes.star_rating, 2)}⭐ +{modString}"
-    if renderedReplay is None:
-        renderedReplay = RenderedReplay()
-    renderedReplay.title = f'{user.username} | {songInfo}{mapInfo}'
-    return renderedReplay
+    return f'{user.username} | {songInfo}{mapInfo}'
 
 
-def createDescription(user: User, score: Score, beatmap: Beatmap, renderedReplay: RenderedReplay = None):
+def createDescription(user: User, score: Score, beatmap: Beatmap) -> str:
     scoreLink = f'https://osu.ppy.sh/scores/{score.id}'
     page = requests.get(scoreLink).text.replace('\n', '')
     if re.match('.*Page Missing.*', page):
         scoreLink = 'not on the website'
 
-    if renderedReplay is None:
-        renderedReplay = RenderedReplay()
-    renderedReplay.description = (
+    return (
         f"This score was set on {score.ended_at.strftime('%d.%m.%Y at %H:%M')}.\n"
         f"\n"
         f"Player: https://osu.ppy.sh/users/{user.id}\n"
@@ -194,21 +209,19 @@ def createDescription(user: User, score: Score, beatmap: Beatmap, renderedReplay
         f"\n"
         f"Join the osu swiss community in discord: https://discord.com/invite/SHz8QtD\n"
     )
-    return renderedReplay
 
 
-def createReplayFile(osu: ossapi.Ossapi, score: Score, gamemode: ossapi.GameMode = ossapi.GameMode.OSU, renderedReplay: RenderedReplay = None) -> bool:
+def createReplayFile(osu: ossapi.Ossapi, score: Score) -> bytes|None:
     try:
-        renderedReplay.replayFileContent = osu.download_score(score.id, raw=True)
+        return osu.download_score(score.id, raw=True)
     except ValueError:
-        renderedReplay.replayFileContent = None
-
-    return renderedReplay
-
+        return None
 
 def createAll(osu: ossapi.Ossapi, user: User, score: Score, beatmap: Beatmap, description='',
               shortenTitle: bool = False) -> RenderedReplay:
-    renderedReplay = createThumbnail(user, score, beatmap, None, description, shortenTitle)
-    renderedReplay = createTitle(osu, user, score, beatmap, renderedReplay, shortenTitle)
-    renderedReplay = createDescription(user, score, beatmap, renderedReplay)
-    return createReplayFile(osu, score, score.beatmap.mode, renderedReplay)
+    renderedReplay = RenderedReplay()
+    renderedReplay.thumbnail = createThumbnail(user, score, beatmap, description, shortenTitle)
+    renderedReplay.title = createTitle(osu, user, score, beatmap, shortenTitle)
+    renderedReplay.description = createDescription(user, score, beatmap)
+    renderedReplay.replayFileContent = createReplayFile(osu, score)
+    return renderedReplay

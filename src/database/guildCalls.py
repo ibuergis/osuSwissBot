@@ -11,7 +11,6 @@ database = db.reference('/').child('guild')
 
 def getFirstGuildBy(column: str, value: str) -> Guild | None:
     player = getGuildsBy(column, value)
-    print(player)
     if len(player) == 0:
         return None
     return player[0]

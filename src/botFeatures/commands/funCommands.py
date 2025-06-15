@@ -15,4 +15,4 @@ class FunCommands:
 
     async def checkForEasterEgg(self, ctx: discord.Message, phrase: str):
         if 'sata andagi' in phrase:
-            await ctx.add_reaction(self.emojis.sataAndagi)
+            await ctx.add_reaction(self.emojis.sataAndagi())

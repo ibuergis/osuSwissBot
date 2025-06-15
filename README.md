@@ -17,7 +17,6 @@ next Add in the values accordingly:
   "firebase": "<firebase link>",
   "clientId": "<The client ID you that you can get from osu!>",
   "clientSecret": "<The client secret connected to the client ID>",
-  "checkRecentPlays": "<true or false | useful for testing>",
   "callbackPort": "3914 is the default"
 }
 ````

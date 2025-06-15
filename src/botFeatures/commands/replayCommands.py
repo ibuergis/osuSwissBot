@@ -63,6 +63,6 @@ class ReplayCommands(commands.Cog):
         self.bot.loop.create_task(ctx.respond('replay is being prepared'))
 
         renderedReplay = await self.osuHandler.prepareReplayFromFile(ctx, replayfile, description, shortentitle)
-        files = [await replayfile.to_file(), discord.File(renderedReplay.thumbnail, 'replay.jpg')]
+        files = [await replayfile.to_file(), discord.File(io.BytesIO(renderedReplay.thumbnail), 'replay.jpg')]
 
         await channel.send(f'title:\n```{renderedReplay.title}```\ndescription:\n```{renderedReplay.description}```', files=files)
