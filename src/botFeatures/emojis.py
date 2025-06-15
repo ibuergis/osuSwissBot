@@ -3,7 +3,10 @@ import discord
 
 class Emojis:
 
-    sataAndagi: discord.Emoji
+    bot: discord.Bot
 
     def __init__(self, bot: discord.Bot):
-        self.sataAndagi = bot.get_emoji(1174622375086657536)
+        self.bot = bot
+
+    def sataAndagi(self):
+        return self.bot.get_emoji(1174622375086657536)

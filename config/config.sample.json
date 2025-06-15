@@ -3,6 +3,8 @@
   "firebase": "",
   "clientId": "",
   "clientSecret": "",
-  "checkRecentPlays": true,
+  "suggestionChannel": "",
+  "suggestionGuild": "",
+  "uploaderRole": "",
   "callbackPort": "3914"
 }

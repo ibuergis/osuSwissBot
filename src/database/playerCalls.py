@@ -13,7 +13,6 @@ database = db.reference('/').child('player')
 
 def getFirstPlayerBy(column: str, value: str) -> Player | None:
     player = getPlayersBy(column, value)
-    print(player)
     if len(player) == 0:
         return None
     return player[0]
