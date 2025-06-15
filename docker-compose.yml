@@ -1,0 +1,8 @@
+services:
+  osuswissbot:
+    container_name: osuswissbot
+    image: osuswissbot
+    volumes:
+      - /home/nixos/docker/osuSwissBot/config:/app/config
+    ports:
+      - "3914:3914"
