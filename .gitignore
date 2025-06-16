@@ -7,3 +7,7 @@ data/skins
 data/temp
 .idea
 venv
+
+*.pyc
+*~
+*.swp

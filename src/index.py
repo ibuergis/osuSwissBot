@@ -14,7 +14,7 @@ from botFeatures.emojis import Emojis
 from helper import Validator
 
 def main():
-    with open('config/config.json', 'r') as f:
+    with open('./config/config.json', 'r') as f:
         config: dict = json.load(f)
         f.close()
 
